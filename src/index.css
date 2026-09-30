@@ -1,111 +1,119 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* estilos pantalla candy y planes, no borrar, si se puede modificar. */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background: #0b0b0b;
+    color: white;
+    overflow-x: hidden;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 3px solid #8b0000;
+    z-index: 1000;
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-decoration: none;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.logo span {
+    font-family: 'Pacifico', cursive;
+    color: #ffde59;
+    font-size: 23px;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 35px;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+nav a {
+    color: #ddd;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+}
+
+nav a:hover,
+nav a.active {
+    color: #ffde59;
+}
+
+.hidden {
+    display: none !important;
+}
+
+footer {
+    position: relative;
+    z-index: 100;
+    background: #050505;
+    padding: 40px 20px 20px;
+    border-top: 1px solid #222;
+    text-align: center;
+    font-size: 14px;
+    color: #888;
+}
+
+.audience-footer {
+    height: 40px;
+    background: repeating-linear-gradient(90deg, #111, #111 30px, #080808 30px, #080808 60px);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    margin-bottom: 20px;
+}
+
+.footer-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 650px) {
+header {
+    padding: 15px 20px;
+}
+
+.logo {
+    font-size: 21px;
+}
+
+.logo span {
+    font-size: 19px;
+}
+
+nav ul {
+    gap: 12px;
+}
+
+nav a {
+    font-size: 10px;
+}
 }
