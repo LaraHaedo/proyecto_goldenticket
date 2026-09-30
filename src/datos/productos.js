@@ -7,8 +7,9 @@ export const categorias = [
   { id: "snacks", etiqueta: "🥨 Snacks", titulo: "🥨 SNACKS SALADOS" },
 ];
 
+
 export const productos = [
-  // combos
+  // ---------- COMBOS ----------
   {
     id: 1, categoria: "combos", estilo: "bronze", codigo: "COMBO 01",
     nombre: "Combo Individual", nombreCarrito: "Combo Individual",
@@ -31,7 +32,7 @@ export const productos = [
     precio: 24500, imagen: "/imagenes/combo-golden.jpg", badge: "VIP",
   },
 
-  // pochoclos
+  // ---------- POCHOCLOS ----------
   {
     id: 4, categoria: "pochoclos", estilo: "golden", codigo: "POCHOCLO 01",
     nombre: "Balde Pochoclo Dulce XL", nombreCarrito: "Balde Pochoclo Dulce XL",
@@ -54,7 +55,7 @@ export const productos = [
     precio: 7800, imagen: "/imagenes/pochoclos.jpg",
   },
 
-  // bebidas
+  // ---------- BEBIDAS ----------
   {
     id: 7, categoria: "bebidas", estilo: "silver", codigo: "BEBIDA 01",
     nombre: "Coca-Cola", nombreCarrito: "Coca-Cola 750ml",
@@ -77,7 +78,7 @@ export const productos = [
     precio: 6500, imagen: "/imagenes/fanta-naranja.png",
   },
 
-  // golosinas
+  // ---------- GOLOSINAS ----------
   {
     id: 10, categoria: "golosinas", estilo: "bronze", codigo: "DULCE 01",
     nombre: "Tableta Chocolate Milk", nombreCarrito: "Chocolate Milk 150g",
@@ -100,7 +101,7 @@ export const productos = [
     precio: 5800, imagen: "/imagenes/gomitas.webp",
   },
 
-  // snacks
+  // ---------- SNACKS ----------
   {
     id: 13, categoria: "snacks", estilo: "golden", codigo: "SNACK 01",
     nombre: "Nachos con Cheddar Caliente", nombreCarrito: "Nachos con Queso",
