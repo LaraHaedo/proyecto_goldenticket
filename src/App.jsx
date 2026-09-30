@@ -1,12 +1,16 @@
-// ................................ Pantallas candy y planes, no borrar, si se puede agregar para sus pantallas.
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./componentes/Navbar";
 import Footer from "./componentes/Footer";
-import Inicio from "./paginas/Inicio";
 import Planes from "./paginas/Planes";
 import Candy from "./paginas/Candy";
 
+// ─────────────────────────────────────────────────────────────
+// PASO 1 (cuando tengas Inicio.jsx): borrá los "//" de esta línea
+// ─────────────────────────────────────────────────────────────
+// import Inicio from "./paginas/Inicio";
+
+// Al cambiar de página, volvemos arriba de todo (NO TOCAR)
 function ScrollArriba() {
   const { pathname } = useLocation();
 
@@ -23,7 +27,17 @@ function App() {
       <ScrollArriba />
       <Navbar />
       <Routes>
-        <Route path="/" element={<Inicio />} />
+        {/* ─────────────────────────────────────────────────────────
+            AHORA: la ruta "/" redirige a Planes (mientras no hay Inicio).
+
+            PASO 2 (cuando tengas Inicio.jsx):
+              - BORRÁ la línea de abajo (la del Navigate)
+              - y DESCOMENTÁ la línea del <Inicio /> que está después
+            ───────────────────────────────────────────────────────── */}
+        <Route path="/" element={<Navigate to="/planes" replace />} />
+        {/* <Route path="/" element={<Inicio />} /> */}
+
+        {/* Estas dos NO se tocan */}
         <Route path="/planes" element={<Planes />} />
         <Route path="/candy" element={<Candy />} />
       </Routes>
@@ -33,4 +47,3 @@ function App() {
 }
 
 export default App;
-//.............................
