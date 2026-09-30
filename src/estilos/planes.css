@@ -1,0 +1,671 @@
+.pagina-planes #particles-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.pagina-planes .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+.pagina-planes .modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.pagina-planes .modal-card {
+    background: linear-gradient(145deg, #1c1a1c, #0d0d0d);
+    border: 2px solid #ffd700;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    transform: scale(0.8);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
+}
+
+.pagina-planes .modal-card.theme-bronze {
+    border-color: #cd7f32 !important;
+    box-shadow: 0 0 35px rgba(205, 127, 50, 0.5) !important;
+}
+
+.pagina-planes .modal-card.theme-bronze h2,
+.pagina-planes .modal-card.theme-bronze .price-amount {
+    color: #cd7f32 !important;
+}
+
+.pagina-planes .modal-card.theme-silver {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 35px rgba(255, 255, 255, 0.4) !important;
+}
+
+.pagina-planes .modal-card.theme-silver h2,
+.pagina-planes .modal-card.theme-silver .price-amount {
+    color: #ffffff !important;
+}
+
+.pagina-planes .modal-card.theme-golden {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 35px rgba(255, 215, 0, 0.5) !important;
+}
+
+.pagina-planes .modal-card.theme-golden h2,
+.pagina-planes .modal-card.theme-golden .price-amount {
+    color: #ffd700 !important;
+}
+
+.pagina-planes .modal-overlay.active .modal-card {
+    transform: scale(1);
+}
+
+.pagina-planes .modal-icon {
+    font-size: 45px;
+    margin-bottom: 10px;
+}
+
+.pagina-planes .modal-card h2 {
+    font-family: 'Cinzel', serif;
+    color: #ffd700;
+    font-size: 22px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.pagina-planes .modal-card p {
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.pagina-planes .payment-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.pagina-planes .price-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.pagina-planes .price-label {
+    font-size: 13px;
+    color: #aaa;
+}
+
+.pagina-planes .price-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: #ffd700;
+    letter-spacing: 1px;
+}
+
+.pagina-planes .payment-title {
+    font-size: 12px;
+    color: #ddd;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.pagina-planes .payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pagina-planes .payment-method {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.pagina-planes .payment-method:hover {
+    border-color: #ffd700;
+}
+
+.pagina-planes .payment-method input[type="radio"] {
+    accent-color: #ffd700;
+    cursor: pointer;
+}
+
+.pagina-planes .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.pagina-planes .modal-pay-btn {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    border: none;
+    color: #111;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    transition: transform 0.2s, background 0.3s;
+    flex: 1;
+}
+
+.pagina-planes .modal-pay-btn:hover {
+    transform: scale(1.03);
+    background: #fff;
+    color: #8b0000;
+}
+
+.pagina-planes .modal-close-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: #aaa;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+}
+
+.pagina-planes .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.pagina-planes .plans-section {
+    min-height: 100vh;
+    position: relative;
+    padding: 145px 5% 90px;
+    background:
+    radial-gradient(circle at 50% 25%, rgba(255, 215, 0, 0.20), transparent 35%),
+    radial-gradient(circle at 50% 100%, rgba(139, 0, 0, 0.20), transparent 40%),
+    #0b0b0b;
+    overflow: hidden;
+}
+
+.pagina-planes .film-strip {
+    position: absolute;
+    width: 100px;
+    height: 500px;
+    opacity: 0.08;
+    background: repeating-linear-gradient(
+    to bottom,
+    #ffd700 0px,
+    #ffd700 25px,
+    transparent 25px,
+    transparent 55px
+    );
+    z-index: 0;
+}
+
+.pagina-planes .film-left {
+    left: -50px;
+    top: 300px;
+    transform: rotate(12deg);
+}
+
+.pagina-planes .film-right {
+    right: -50px;
+    top: 300px;
+    transform: rotate(-12deg);
+}
+
+.pagina-planes .plans-heading {
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 60px;
+    position: relative;
+    z-index: 2;
+}
+
+.pagina-planes .small-title {
+    font-family: 'Pacifico', cursive;
+    color: #ffd700;
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.pagina-planes .plans-heading h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 46px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    color: white;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.20);
+}
+
+.pagina-planes .heading-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 10px auto 18px;
+    color: #ffd700;
+    font-size: 18px;
+}
+
+.pagina-planes .heading-line::before,
+.pagina-planes .heading-line::after {
+    content: '';
+    height: 1px;
+    width: 100px;
+    background: linear-gradient(90deg, transparent, #ffd700);
+}
+
+.pagina-planes .heading-line::after {
+    background: linear-gradient(90deg, #ffd700, transparent);
+}
+
+.pagina-planes .plans-heading > p:last-child {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 600px;
+    margin: auto;
+}
+
+.pagina-planes .plans-container {
+    max-width: 1100px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 35px;
+    position: relative;
+    z-index: 2;
+}
+
+.pagina-planes .plan-card {
+    position: relative;
+    min-height: 450px;
+    border-radius: 22px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #262426, #171517);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    will-change: transform;
+}
+
+.pagina-planes .plan-card:hover {
+    transform: translateY(-6px);
+}
+
+.pagina-planes .bronze {
+    box-shadow: 0 15px 35px rgba(205, 127, 50, 0.25);
+    border: 1px solid #69451f;
+}
+
+.pagina-planes .bronze:hover {
+    border-color: #cd7f32;
+    box-shadow: 0 20px 40px rgba(205, 127, 50, 0.45);
+}
+
+.pagina-planes .silver {
+    box-shadow: 0 15px 35px rgba(220, 220, 220, 0.18);
+    border: 1px solid #555;
+}
+
+.pagina-planes .silver:hover {
+    border-color: #ffffff;
+    box-shadow: 0 20px 40px rgba(255, 255, 255, 0.35);
+}
+
+.pagina-planes .golden {
+    box-shadow: 0 15px 40px rgba(255, 215, 0, 0.28);
+    border: 1px solid #8b6900;
+}
+
+.pagina-planes .golden:hover {
+    border-color: #ffd700;
+    box-shadow: 0 20px 45px rgba(255, 215, 0, 0.5);
+}
+
+.pagina-planes .ticket-holes {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #0b0b0b;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+}
+
+.pagina-planes .ticket-holes.left {
+    left: -11px;
+}
+
+.pagina-planes .ticket-holes.right {
+    right: -11px;
+}
+
+.pagina-planes .plan-content {
+    padding: 30px;
+    height: 100%;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+}
+
+.pagina-planes .plan-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagina-planes .plan-title h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.pagina-planes .plan-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    color: #666;
+    letter-spacing: 2px;
+}
+
+.pagina-planes .bronze h2 {
+    color: #cd7f32;
+}
+
+.pagina-planes .silver h2 {
+    color: #eeeeee;
+}
+
+.pagina-planes .golden h2 {
+    color: #ffd700;
+}
+
+.pagina-planes .plan-divider {
+    height: 3px;
+    width: 100%;
+    margin: 20px 0 25px;
+    border-radius: 10px;
+}
+
+.pagina-planes .bronze .plan-divider {
+    background: linear-gradient(90deg, #cd7f32, #7c4a20);
+    box-shadow: 0 0 8px rgba(205, 127, 50, 0.4);
+}
+
+.pagina-planes .silver .plan-divider {
+    background: linear-gradient(90deg, #888, #eee, #888);
+    box-shadow: 0 0 8px rgba(220, 220, 220, 0.3);
+}
+
+.pagina-planes .golden .plan-divider {
+    background: linear-gradient(90deg, #8b6900, #ffd700, #8b6900);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.pagina-planes .benefit-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.pagina-planes .price-tag {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.pagina-planes .bronze .price-tag {
+    color: #cd7f32;
+}
+
+.pagina-planes .silver .price-tag {
+    color: #ffffff;
+}
+
+.pagina-planes .golden .price-tag {
+    color: #ffd700;
+}
+
+.pagina-planes .req-tag {
+    font-size: 13px;
+    font-weight: 700;
+    color: #cd7f32;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.pagina-planes .unlock-tag {
+    font-size: 11px;
+    color: #aaa;
+    font-style: italic;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border-left: 2px solid #ffd700;
+}
+
+.pagina-planes .benefit-lines div:not(.price-tag):not(.unlock-tag):not(.req-tag) {
+    position: relative;
+    color: #ddd;
+    font-size: 13px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+    line-height: 1.4;
+}
+
+.pagina-planes .plan-button {
+    margin-top: 25px;
+    align-self: center;
+    min-width: 200px;
+    padding: 10px 25px;
+    border-radius: 30px;
+    border: 2px solid;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+    position: relative;
+    z-index: 3;
+}
+
+.pagina-planes .bronze .plan-button {
+    background: linear-gradient(135deg, #e09a4a, #b66b22);
+    border-color: #e4a257;
+    color: #111;
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
+}
+
+.pagina-planes .silver .plan-button {
+    background: linear-gradient(135deg, #dedede, #929292);
+    border-color: #eeeeee;
+    color: #111;
+    box-shadow: 0 0 15px rgba(220, 220, 220, 0.25);
+}
+
+.pagina-planes .golden .plan-button {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    border-color: #ffe45c;
+    color: #111;
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.4);
+}
+
+.pagina-planes .plan-button:hover {
+    transform: scale(1.05);
+    background: white;
+    color: #8b0000;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.7);
+}
+
+.pagina-planes .card-form-container {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px dashed rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.pagina-planes .payment-method.selected {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.12);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.pagina-planes .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pagina-planes .form-group label {
+    font-size: 11px;
+    color: #ffd700;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pagina-planes .form-group input {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    outline: none;
+}
+
+.pagina-planes .form-group input:focus {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.pagina-planes .form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.pagina-planes .form-row .form-group {
+    flex: 1;
+}
+
+.pagina-planes .bronze-form-container {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(205, 127, 50, 0.5);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+}
+
+.pagina-planes .bronze-form-container .form-group label {
+    color: #cd7f32;
+}
+
+.pagina-planes .cinema-message {
+    text-align: center;
+    margin: 75px auto 0;
+    max-width: 800px;
+    position: relative;
+    z-index: 2;
+}
+
+.pagina-planes .cinema-line {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, #8b0000, #ffd700, #8b0000, transparent);
+    margin: 15px 0;
+}
+
+.pagina-planes .cinema-message p {
+    font-family: 'Bebas Neue', sans-serif;
+    color: #b8860b;
+    letter-spacing: 4px;
+    font-size: 15px;
+}
+
+.pagina-planes .cinema-message h3 {
+    font-family: 'Cinzel', serif;
+    color: #ffd700;
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin-top: 8px;
+}
+
+@media (max-width: 950px) {
+.pagina-planes .plans-container {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+}
+}
+
+@media (max-width: 650px) {
+.pagina-planes .plans-section {
+    padding-top: 130px;
+}
+
+.pagina-planes .plans-heading h1 {
+    font-size: 34px;
+}
+
+.pagina-planes .plans-container {
+    gap: 25px;
+}
+}
+
+/* Mensaje de error de validación del modal */
+.pagina-planes .modal-card .modal-error {
+    color: #ff6b6b;
+    font-size: 12px;
+    text-align: left;
+    margin: 0 0 15px;
+}
