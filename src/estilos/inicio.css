@@ -1,0 +1,350 @@
+/* Estilos de la pantalla Inicio (cartelera). Todo va bajo .pagina-inicio
+   para no chocar con Planes y Candy. Header, footer y base están en index.css */
+
+/* ===== HERO / MARQUESINA ===== */
+.pagina-inicio .hero {
+    position: relative;
+    min-height: auto;
+    margin-top: 65px;
+    padding: 30px 15px 20px;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.25) 0%, rgba(0, 0, 0, 0.95) 75%),
+        linear-gradient(90deg, #300 0%, #700 10%, #200 20%, #500 25%, #100 30%,
+            transparent 35%, transparent 65%, #100 70%, #500 75%, #200 80%, #700 90%, #300 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.pagina-inicio .marquee-box {
+    position: relative;
+    width: 90%;
+    max-width: 650px;
+    background: #fff;
+    border: 14px solid #8b0000;
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.6), inset 0 0 15px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+    margin-bottom: 30px;
+    background-image: linear-gradient(#f0f0f0 1px, transparent 1px);
+    background-size: 100% 32px;
+}
+
+.pagina-inicio .marquee-box::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    border: 5px dotted #ffd700;
+    border-radius: 20px;
+    animation: marqueeLights 0.8s infinite alternate;
+    pointer-events: none;
+}
+
+.pagina-inicio .marquee-sub {
+    font-family: 'Pacifico', cursive;
+    color: #8b0000;
+    font-size: 26px;
+}
+
+.pagina-inicio .marquee-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 55px;
+    color: #000;
+    line-height: 1;
+    margin: 10px 0;
+    letter-spacing: 2px;
+}
+
+.pagina-inicio .marquee-info {
+    font-weight: 700;
+    color: #b8860b;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+.pagina-inicio .marquee-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.pagina-inicio .dot-btn {
+    width: 15px;
+    height: 15px;
+    background: #aaa;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: 0.3s;
+}
+
+.pagina-inicio .dot-btn.active {
+    background: #ffd700;
+    transform: scale(1.3);
+    box-shadow: 0 0 8px #ffd700;
+}
+
+@keyframes marqueeLights {
+    0% { opacity: 0.4; filter: drop-shadow(0 0 2px #ffd700); }
+    100% { opacity: 1; filter: drop-shadow(0 0 14px #ffd700); }
+}
+
+/* ===== CARTELERA ===== */
+.pagina-inicio .section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+.pagina-inicio .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: #ffd700;
+    border-left: 5px solid #8b0000;
+    padding-left: 15px;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+}
+
+.pagina-inicio .movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 30px;
+}
+
+.pagina-inicio .movie-card {
+    background: #181818;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 10px solid #222;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.pagina-inicio .movie-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+    border-color: #ffd700;
+}
+
+.pagina-inicio .movie-poster {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+    background: #333;
+}
+
+.pagina-inicio .movie-details {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.pagina-inicio .movie-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.pagina-inicio .movie-tag {
+    font-size: 12px;
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.pagina-inicio .schedules {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.pagina-inicio .time-badge {
+    background: #333;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #555;
+}
+
+.pagina-inicio .btn-buy {
+    background: #8b0000;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagina-inicio .btn-buy:hover {
+    background: #ffd700;
+    color: #000;
+}
+
+/* ===== PROMOCIONES ===== */
+.pagina-inicio .promos-bg {
+    background: #121212;
+    border-top: 2px dashed #333;
+    border-bottom: 2px dashed #333;
+}
+
+.pagina-inicio .tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+}
+
+.pagina-inicio .ticket-item {
+    position: relative;
+    background: linear-gradient(135deg, #fff 0%, #fffbe6 100%);
+    color: #111;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s;
+    border: 2px solid #ffd700;
+}
+
+.pagina-inicio .ticket-item:hover {
+    transform: scale(1.03);
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+}
+
+.pagina-inicio .ticket-item::before,
+.pagina-inicio .ticket-item::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #121212;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.pagina-inicio .ticket-item::before { left: -10px; }
+.pagina-inicio .ticket-item::after { right: -10px; }
+
+.pagina-inicio .ticket-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 50px;
+    padding-right: 15px;
+    border-right: 2px dashed #d4af37;
+    margin-right: 15px;
+    color: #b8860b;
+}
+
+.pagina-inicio .ticket-text h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    color: #000;
+}
+
+.pagina-inicio .ticket-text p {
+    font-size: 13px;
+    color: #444;
+}
+
+/* ===== MODAL DE COMPRA ===== */
+.pagina-inicio .ticket-modal {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.pagina-inicio .ticket-modal-content {
+    background: #1a1a1a;
+    border: 3px solid #ffd700;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    padding: 25px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+.pagina-inicio .close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.pagina-inicio .ticket-modal h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    color: #ffd700;
+    margin-bottom: 15px;
+}
+
+.pagina-inicio .ticket-modal label {
+    display: block;
+    text-align: left;
+    margin: 15px 0 5px;
+    font-size: 14px;
+}
+
+.pagina-inicio .ticket-modal select,
+.pagina-inicio .ticket-modal input {
+    width: 100%;
+    padding: 10px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 5px;
+}
+
+.pagina-inicio .modal-btn {
+    margin-top: 20px;
+    background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+    color: black;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.pagina-inicio .modal-btn:hover {
+    background: #ffffff;
+    color: #8b0000;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 650px) {
+    .pagina-inicio .marquee-title { font-size: 38px; }
+    .pagina-inicio .marquee-sub { font-size: 20px; }
+}
