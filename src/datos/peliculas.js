@@ -6,7 +6,7 @@ export const peliculas = [
     genero: "Ciencia Ficción",
     duracion: "3h 15m",
     horarios: ["16:00", "19:30", "22:00"],
-    imagen: "/peliculas/avatar.jpg",
+    imagen: "/peliculas/Avatar.jpg",
   },
   {
     id: 2,
@@ -14,7 +14,7 @@ export const peliculas = [
     genero: "Horror / Suspenso",
     duracion: "1h 45m",
     horarios: ["18:00", "21:00", "23:30"],
-    imagen: "/peliculas/terrifier.jpg",
+    imagen: "/peliculas/Terrifier.jpg",
   },
   {
     id: 3,
@@ -22,7 +22,7 @@ export const peliculas = [
     genero: "Animación / Familia",
     duracion: "1h 30m",
     horarios: ["14:00", "16:30", "18:30"],
-    imagen: "/peliculas/odisea.jpg",
+    imagen: "/peliculas/LaOdisea.jpg",
   },
   {
     id: 4,
@@ -30,7 +30,7 @@ export const peliculas = [
     genero: "Acción / Thriller",
     duracion: "2h 10m",
     horarios: ["17:15", "20:00", "22:45"],
-    imagen: "/peliculas/spiderman.jpg",
+    imagen: "/peliculas/Spiderman.jpg",
   },
 ];
 
