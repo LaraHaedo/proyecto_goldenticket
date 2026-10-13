@@ -5,7 +5,7 @@ export const peliculas = [
     titulo: "AVATAR: FUEGO Y CENIZAS",
     genero: "Ciencia Ficción",
     duracion: "3h 15m",
-    horarios: ["16:00", "19:30", "22:00"],
+    horarios: ["14:00", "21:00"],
     imagen: "/peliculas/Avatar.jpg",
   },
   {
@@ -13,23 +13,23 @@ export const peliculas = [
     titulo: "TERRIFIER 3",
     genero: "Horror / Suspenso",
     duracion: "1h 45m",
-    horarios: ["18:00", "21:00", "23:30"],
+    horarios: ["13:45", "19:15"],
     imagen: "/peliculas/Terrifier.jpg",
   },
   {
     id: 3,
     titulo: "LA ODISEA",
-    genero: "Animación / Familia",
-    duracion: "1h 30m",
-    horarios: ["14:00", "16:30", "18:30"],
+    genero: "Animación / Fantasia",
+    duracion: "2h 52m",
+    horarios: ["10:30", "17:30"],
     imagen: "/peliculas/LaOdisea.jpg",
   },
   {
     id: 4,
     titulo: "SPIDERMAN: Un nuevo Día",
-    genero: "Acción / Thriller",
-    duracion: "2h 10m",
-    horarios: ["17:15", "20:00", "22:45"],
+    genero: "Acción / fantasia",
+    duracion: "2h 30m",
+    horarios: ["11:00", "16:30", "22:00"],
     imagen: "/peliculas/Spiderman.jpg",
   },
 ];
@@ -38,17 +38,17 @@ export const destacados = [
   {
     sub: "Gran Estreno de la Semana",
     title: "AVATAR: FUEGO Y CENIZAS",
-    info: "SALA GOLDEN IMAX 3D - HOY 20:30 HS",
+    info: "SALA 2D Y 3D - HOY 13:45 HS",
   },
   {
     sub: "Exclusivo de Medianoche",
-    title: "NOCHE DE TERROR",
-    info: "SALA 4DX - HOY 23:30 HS",
+    title: "TERRIFIER 3",
+    info: "SALA 2D - VIERNES Y SABADO",
   },
   {
-    sub: "Función Familiar Especial",
-    title: "AVENTURA GALÁCTICA",
-    info: "SALA 2D DIGITAL - HOY 16:30 HS",
+    sub: "Función Especial",
+    title: "La Odisea",
+    info: "SALA 3D - SOLO EL DIA DOMINGO",
   },
 ];
 
