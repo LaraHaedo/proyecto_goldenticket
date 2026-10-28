@@ -1,0 +1,550 @@
+/* ==================== ESTILOS BASE ==================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #0b0b0b;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 3px solid #8b0000;
+    z-index: 1000;
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* LOGO */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+
+.logo span {
+    font-family: 'Pacifico', cursive;
+    color: #ffde59;
+    font-size: 23px;
+}
+
+/* NAVEGACIÓN */
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 35px;
+}
+
+nav a {
+    color: #ddd;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+}
+
+nav a:hover,
+nav a.active {
+    color: #ffde59;
+}
+
+
+/* ==================== PELÍCULA ==================== */
+
+.pelicula-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 140px 30px 60px;
+}
+
+.pelicula {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 50px;
+    align-items: center;
+    background: #151515;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 35px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.poster-container {
+    display: flex;
+    justify-content: center;
+}
+
+.pelicula-poster {
+    width: 100%;
+    max-width: 350px;
+    height: 500px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 8px solid #222;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.25);
+}
+
+.pelicula-info {
+    padding: 10px;
+}
+
+
+
+.pelicula-info h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 58px;
+    line-height: 1;
+    color: #ffffff;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+}
+
+.datos-pelicula {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.datos-pelicula span {
+    background: #8b0000;
+    padding: 7px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.pelicula-info h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.pelicula-info > p {
+    color: #ccc;
+    line-height: 1.7;
+    font-size: 15px;
+    margin-bottom: 25px;
+}
+
+.informacion-extra {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    border-top: 1px solid #444;
+    padding-top: 20px;
+}
+
+.informacion-extra strong {
+    color: #ffde59;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.informacion-extra p {
+    color: #ccc;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+
+/* ==================== FUNCIONES ==================== */
+
+.funciones {
+    margin-top: 60px;
+}
+
+.section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: #8b0000;
+    border-left: 5px solid #8b0000;
+    padding-left: 15px;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+}
+
+
+/* ==================== DÍAS ==================== */
+
+.dias {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 35px;
+}
+
+.dia {
+    width: 100px;
+    height: 100px;
+    background: #181818;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: 0.3s;
+}
+
+.dia span {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.dia strong {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 35px;
+    color: #ffffff;
+}
+
+.dia small {
+    color: #aaa;
+}
+
+.dia:hover,
+.dia.active {
+    border-color: #ffde59;
+    background: #8b0000;
+    transform: translateY(-3px);
+}
+
+
+/* ==================== HORARIOS ==================== */
+
+.funciones-dia {
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.funciones-dia h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    color: #ffffff;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+.horarios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.horario {
+    min-width: 100px;
+    padding: 12px 18px;
+    background: #292929;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.horario strong {
+    font-size: 17px;
+}
+
+.horario span {
+    color: #ffde59;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.horario:hover {
+    background: #8b0000;
+    border-color: #ffde59;
+    transform: translateY(-3px);
+}
+
+.oculto {
+    display: none;
+}
+
+
+/* ==================== MODAL LOGIN ==================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border: 3px solid #ffde59;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    padding: 30px;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.modal h2 {
+    font-family: 'Cinzel', serif;
+    color: #ffde59;
+    margin-bottom: 20px;
+}
+
+.mensaje-login {
+    color: #ddd;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.login-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.login-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    background: #8b0000;
+    color: white;
+    transition: 0.3s;
+}
+
+.login-buttons button:hover {
+    background: #ffde59;
+    color: #000;
+}
+
+
+
+
+/* TICKET */
+
+.loading-ticket {
+    font-size: 45px;
+    margin-bottom: 15px;
+
+    animation: ticketPulse 1s infinite ease-in-out;
+}
+
+@keyframes ticketPulse {
+
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+}
+
+
+/* TÍTULO */
+
+.loading-content h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: #ffde59;
+
+    margin-bottom: 8px;
+}
+
+
+/* TEXTO */
+
+.loading-content p {
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+
+/* CÍRCULO DE CARGA */
+
+.loading-spinner {
+    width: 38px;
+    height: 38px;
+
+    margin: 0 auto 12px;
+
+    border: 3px solid #333;
+    border-top: 3px solid #ffde59;
+
+    border-radius: 50%;
+
+    animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* "CARGANDO..." */
+
+.loading-text {
+    color: #8b0000;
+
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+
+    letter-spacing: 2px;
+}
+
+
+/* ==================== FOOTER ==================== */
+
+footer {
+    background: #050505;
+    padding: 40px 20px 20px;
+    border-top: 1px solid #222;
+    text-align: center;
+    font-size: 14px;
+    color: #888;
+}
+
+.footer-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #ffde59;
+    margin-bottom: 10px;
+}
+
+.audience-footer {
+    height: 40px;
+    background: repeating-linear-gradient(
+        90deg,
+        #111,
+        #111 30px,
+        #080808 30px,
+        #080808 60px
+    );
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    margin-bottom: 20px;
+}
+
+.copyright {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #555;
+}
+
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 800px) {
+
+    header {
+        padding: 12px 20px;
+    }
+
+    nav {
+        display: none;
+    }
+
+    .pelicula {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .poster-container {
+        justify-content: center;
+    }
+
+    .pelicula-poster {
+        height: 450px;
+    }
+
+    .datos-pelicula {
+        justify-content: center;
+    }
+
+    .informacion-extra {
+        grid-template-columns: 1fr;
+    }
+
+    .dias {
+        justify-content: center;
+    }
+
+    .section-title {
+        font-size: 35px;
+    }
+}
+
+
+
+/* ==================== BOTÓN DE CUENTA (ENCABEZADO) ==================== */
+
+#btnCuenta {
+    border: 1px solid #ffde59;
+    border-radius: 4px;
+    padding: 7px 14px;
+    color: #ffde59;
+}
+
+#btnCuenta:hover {
+    background: #ffde59;
+    color: #000;
+}
