@@ -35,7 +35,7 @@ function Pelicula() {
             <div className="datos-pelicula">
               <span>Ciencia Ficción</span>
               <span>3h 15m</span>
-              <span>2D/3D</span>
+              <span>2D</span>
             </div>
             <h2>Sinopsis</h2>
             <p>
@@ -75,7 +75,7 @@ function Pelicula() {
             ))}
           </div>
           <div className="funciones-dia">
-            {["2D", "3D"].map((formato) => (
+            {["2D"].map((formato) => (
               <div key={formato}>
                 <h3>Funciones en {formato}</h3>
                 <div className="horarios">
