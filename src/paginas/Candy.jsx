@@ -8,50 +8,77 @@ import { formatearPrecio } from "../utilidades";
 import "../estilos/candy.css";
 
 function Candy() {
+
+  // Guarda la categoría seleccionada. Al principio muestra todos los productos.
   const [categoriaActiva, setCategoriaActiva] = useState("todos");
+
+  // Guarda los productos que se agregaron al carrito.
   const [carrito, setCarrito] = useState([]);
+
+  // Controla si el carrito está abierto o cerrado. Al principio está cerrado.
   const [carritoAbierto, setCarritoAbierto] = useState(false);
+
+  // Controla la animación del botón flotante del carrito.
   const [pulso, setPulso] = useState(false);
 
-  //carrito
+
+  // Función para agregar un pr oducto al carrito.
   const agregarAlCarrito = (producto) => {
+
+    // Busca si el producto ya existe en el carrito, comparando sus ID.
     const existe = carrito.find((item) => item.id === producto.id);
 
+    // Si el producto ya está en el carrito...
     if (existe) {
-      
+
+      // Recorre el carrito y aumenta en 1 la cantidad del producto seleccionado.
+      // Los demás productos quedan iguales.
       setCarrito(
         carrito.map((item) =>
-          item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
+          item.id === producto.id
+            ? { ...item, cantidad: item.cantidad + 1 }
+            : item
         )
       );
+
     } else {
+
       setCarrito([
-        ...carrito,
+        ...carrito, // Conserva los productos que ya estaban en el carrito.
         {
-          id: producto.id,
-          nombre: producto.nombreCarrito,
-          precio: producto.precio,
-          imagen: producto.imagen,
-          cantidad: 1,
+          id: producto.id, // Guarda el ID del producto.
+          nombre: producto.nombreCarrito, // Guarda el nombre para mostrarlo en el carrito.
+          precio: producto.precio, // Guarda el precio del producto.
+          imagen: producto.imagen, // Guarda la imagen del producto.
+          cantidad: 1, // Establece la cantidad inicial en 1.
         },
       ]);
     }
 
-    // el botón flotante
+    // Activa la animación del botón flotante del carrito.
     setPulso(true);
+
+    // Después de 200 milisegundos, desactiva la animación.
     setTimeout(() => setPulso(false), 200);
   };
 
+  // Por ejemplo: cambio = 1 para sumar o cambio = -1 para restar.
   const cambiarCantidad = (id, cambio) => {
+
+    // Recorre todos los productos del carrito y modifica el seleccionado.
     const actualizado = carrito
       .map((item) =>
-        item.id === id ? { ...item, cantidad: item.cantidad + cambio } : item
+        item.id === id
+          ? { ...item, cantidad: item.cantidad + cambio }
+          : item
       )
-      
+
+      // elimina del carrito los productos si son 0.
       .filter((item) => item.cantidad > 0);
 
     setCarrito(actualizado);
   };
+
 
   const finalizarCompra = () => {
     if (carrito.length === 0) {
