@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LoginRequiredModal from "../components/LoginRequiredModal";
-import { DIAS, FUNCIONES, PELICULA } from "../data/funcionesTerrifier";
+import LoginRequiredModal from "../componentes/LoginRequiredModal";
+import { DIAS, FUNCIONES, PELICULA } from "../datos/funcionesTerrifier";
 import { estaLogueado, guardarPaginaRetorno } from "../utils/auth";
 
 const poster = "/peliculas/Terrifier.jpg";
