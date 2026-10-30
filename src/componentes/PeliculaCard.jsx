@@ -30,7 +30,7 @@ function PeliculaCard({ pelicula }) {
             ))}
           </div>
         </div>
-        <button className="btn-buy" onClick={() => onComprar(pelicula)}>
+        <button className="btn-buy" onClick={abrirDetalle}>
           Conseguir Golden Ticket
         </button>
       </div>
