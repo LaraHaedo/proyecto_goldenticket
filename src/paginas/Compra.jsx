@@ -53,36 +53,36 @@ function obtenerButacasOcupadas(funcion) {
   (compradas[claveFuncion(funcion)] || []).forEach((b) => ocupadas.add(b));
   return ocupadas;
 }
-// function numeroTarjetaValido(numero) {
-//   if (!/^\d{13,19}$/.test(numero)) return false;
-//   let suma = 0,
-//     alternar = false;
-//   for (let i = numero.length - 1; i >= 0; i--) {
-//     let d = parseInt(numero[i], 10);
-//     if (alternar) {
-//       d *= 2;
-//       if (d > 9) d -= 9;
-//     }
-//     suma += d;
-//     alternar = !alternar;
-//   }
-//   return suma % 10 === 0;
-// }
-// function vencimientoValido(texto) {
-//   const partes = texto.split("/");
-//   if (partes.length !== 2) return false;
-//   const mes = parseInt(partes[0], 10),
-//     anio = 2000 + parseInt(partes[1], 10);
-//   if (!(mes >= 1 && mes <= 12) || Number.isNaN(anio)) return false;
-//   return new Date(anio, mes, 0, 23, 59, 59) >= new Date();
-// }
-// function generarCodigo() {
-//   const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-//   let codigo = "GT-";
-//   for (let i = 0; i < 6; i++)
-//     codigo += letras[Math.floor(Math.random() * letras.length)];
-//   return codigo;
-// }
+function numeroTarjetaValido(numero) {
+  if (!/^\d{13,19}$/.test(numero)) return false;
+  let suma = 0,
+    alternar = false;
+  for (let i = numero.length - 1; i >= 0; i--) {
+    let d = parseInt(numero[i], 10);
+    if (alternar) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    suma += d;
+    alternar = !alternar;
+  }
+  return suma % 10 === 0;
+}
+function vencimientoValido(texto) {
+  const partes = texto.split("/");
+  if (partes.length !== 2) return false;
+  const mes = parseInt(partes[0], 10),
+    anio = 2000 + parseInt(partes[1], 10);
+  if (!(mes >= 1 && mes <= 12) || Number.isNaN(anio)) return false;
+  return new Date(anio, mes, 0, 23, 59, 59) >= new Date();
+}
+function generarCodigo() {
+  const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let codigo = "GT-";
+  for (let i = 0; i < 6; i++)
+    codigo += letras[Math.floor(Math.random() * letras.length)];
+  return codigo;
+}
 
 function Compra() {
   const navigate = useNavigate();
@@ -595,7 +595,7 @@ function Compra() {
               <p className="error-compra">{errorButacas}</p>
             </div>
           )}
-          {/*{paso === 3 && (
+          {paso === 3 && (
             <div className="paso">
               <h1 className="paso-titulo">ELEGÍ CÓMO PAGAR</h1>
               <h2 className="subtitulo">DATOS PERSONALES</h2>
@@ -705,8 +705,8 @@ function Compra() {
               )}
               <p className="error-compra">{errorPago}</p>
             </div>
-          )}*/}
-          {/* {paso === 4 && compraFinal && (
+          )}
+          {paso === 4 && compraFinal && (
             <div className="confirmacion">
               <h1 className="paso-titulo centrado">¡COMPRA CONFIRMADA! 🎉</h1>
               <p className="conf-sub">
@@ -759,7 +759,7 @@ function Compra() {
                 </Link>
               </div>
             </div>
-          )} */}
+          )}
         </section>
         {paso < 4 && (
           <aside className="resumen">
