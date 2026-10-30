@@ -16,6 +16,7 @@ import {
   PRECIOS,
   claveMes,
 } from "../utils/descuentos";
+import "../estilos/compra.css";
 
 const FILAS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const BLOQUES = [4, 7, 4];
