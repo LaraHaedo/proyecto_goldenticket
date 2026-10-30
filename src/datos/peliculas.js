@@ -48,7 +48,7 @@ export const destacados = [
   {
     sub: "Función Especial",
     title: "La Odisea",
-    info: "SALA 3D - TODOS LOS DÍAS 12:00 HS",
+    info: "SALA 2D - TODOS LOS DÍAS 12:00 HS",
   },
 ];
 

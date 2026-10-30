@@ -4,7 +4,10 @@ import Navbar from "./componentes/Navbar";
 import Footer from "./componentes/Footer";
 import Planes from "./paginas/Planes";
 import Candy from "./paginas/Candy";
-
+import Pelicula from "./paginas/Pelicula";
+import Terrifier from "./paginas/Terrifier";
+import Odisea from "./paginas/Odisea";
+import Spiderman from "./paginas/Spiderman";
 
  import Inicio from "./paginas/Inicio";
 
