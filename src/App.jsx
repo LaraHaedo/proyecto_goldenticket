@@ -9,6 +9,9 @@ import Pelicula from "./paginas/Pelicula";
 import Terrifier from "./paginas/Terrifier";
 import Odisea from "./paginas/Odisea";
 import Spiderman from "./paginas/Spiderman";
+import Login from "./paginas/Login";
+import Registro from "./paginas/Registro";
+import Compra from "./paginas/Compra";
 
  import Inicio from "./paginas/Inicio";
 
