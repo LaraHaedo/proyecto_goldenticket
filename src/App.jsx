@@ -45,6 +45,10 @@ function App() {
         <Route path="/pelicula/terrifier" element={<Terrifier />} />
         <Route path="/pelicula/odisea" element={<Odisea />} />
         <Route path="/pelicula/spiderman" element={<Spiderman />} />
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/compra" element={<Compra />} />
         {/* Estas dos NO se tocan */}
         <Route path="/planes" element={<Planes />} />
         <Route path="/candy" element={<Candy />} />
