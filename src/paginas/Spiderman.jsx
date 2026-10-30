@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LoginRequiredModal from "../components/LoginRequiredModal";
-import { DIAS, FUNCIONES, PELICULA } from "../data/funcionesSpiderman";
+import LoginRequiredModal from "../componentes/LoginRequiredModal";
+import { DIAS, FUNCIONES, PELICULA } from "../datos/funcionesSpiderman";
 import { estaLogueado, guardarPaginaRetorno } from "../utils/auth";
 
 const poster = "/peliculas/Spiderman.jpg";
