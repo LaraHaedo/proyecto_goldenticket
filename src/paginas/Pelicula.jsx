@@ -79,7 +79,7 @@ function Pelicula() {
               <div key={formato}>
                 <h3>Funciones en {formato}</h3>
                 <div className="horarios">
-                  {FUNCIONES[diaActivo][formato].map((hora) => {
+                  {FUNCIONES[diaActivo]["2D"].map((hora) => {
                     const d = DIAS.find((x) => x.id === diaActivo);
                     return (
                       <button
