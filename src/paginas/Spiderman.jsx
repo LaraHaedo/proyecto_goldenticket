@@ -35,7 +35,7 @@ function Spiderman() {
             <div className="datos-pelicula">
               <span>Acción</span>
               <span>2h 30m</span>
-              <span>2D/3D</span>
+              <span>2D</span>
             </div>
             <h2>Sinopsis</h2>
             <p>
@@ -74,7 +74,7 @@ function Spiderman() {
             ))}
           </div>
           <div className="funciones-dia">
-            {["2D", "3D"].map((formato) => (
+            {["2D"].map((formato) => (
               <div key={formato}>
                 <h3>Funciones en {formato}</h3>
                 <div className="horarios">
