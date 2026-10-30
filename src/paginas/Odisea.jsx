@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../estilos/pelicula.css";
 import LoginRequiredModal from "../componentes/LoginRequiredModal";
 import { DIAS, FUNCIONES, PELICULA } from "../datos/funcionesOdisea";
 import { estaLogueado, guardarPaginaRetorno } from "../utils/auth";

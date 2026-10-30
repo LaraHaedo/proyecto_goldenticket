@@ -7,7 +7,7 @@ export function estaLogueado() {
 
 export function guardarPaginaRetorno(pagina = '/pelicula') {
   localStorage.setItem(CLAVE_RETORNO, pagina);
-}b
+}
 
 export function obtenerPaginaRetorno() {
   return localStorage.getItem(CLAVE_RETORNO) || '/pelicula';
