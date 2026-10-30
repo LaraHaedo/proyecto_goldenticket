@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 // Tarjeta de una película de la cartelera
 function PeliculaCard({ pelicula, onComprar }) {
   return (
