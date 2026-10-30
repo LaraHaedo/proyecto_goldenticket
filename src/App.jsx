@@ -4,6 +4,7 @@ import Navbar from "./componentes/Navbar";
 import Footer from "./componentes/Footer";
 import Planes from "./paginas/Planes";
 import Candy from "./paginas/Candy";
+
 import Pelicula from "./paginas/Pelicula";
 import Terrifier from "./paginas/Terrifier";
 import Odisea from "./paginas/Odisea";
@@ -37,7 +38,10 @@ function App() {
             ───────────────────────────────────────────────────────── */}
         <Route path="/" element={< Inicio/>} />
         {/* <Route path="/" element={<Inicio />} /> */}
-
+        <Route path="/pelicula/avatar" element={<Pelicula />} />
+        <Route path="/pelicula/terrifier" element={<Terrifier />} />
+        <Route path="/pelicula/odisea" element={<Odisea />} />
+        <Route path="/pelicula/spiderman" element={<Spiderman />} />
         {/* Estas dos NO se tocan */}
         <Route path="/planes" element={<Planes />} />
         <Route path="/candy" element={<Candy />} />
