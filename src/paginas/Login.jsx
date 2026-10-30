@@ -1,6 +1,7 @@
 import { useState } from "react";
+import "../estilos/cuenta.css";
 import { Link, useNavigate } from "react-router-dom";
-import LoadingModal from "../components/LoadingModal";
+import LoadingModal from "../componentes/LoadingModal";
 import { loginExitoso, obtenerPaginaRetorno } from "../utils/auth";
 
 function Login() {
