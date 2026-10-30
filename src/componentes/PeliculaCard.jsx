@@ -1,6 +1,19 @@
+import { useNavigate } from "react-router-dom";
+
 // Tarjeta de una película de la cartelera
-function PeliculaCard({ pelicula, onComprar }) {
-  return (
+function PeliculaCard({ pelicula }) {
+  const navigate = useNavigate();
+  const abrirDetalle = () => {
+    const rutas = {
+      1: "/pelicula/avatar",
+      2: "/pelicula/terrifier",
+      3: "/pelicula/odisea",
+      4: "/pelicula/spiderman",
+    };
+
+    navigate(rutas[pelicula.id]);
+  };
+    return (
     <div className="movie-card">
       <img src={pelicula.imagen} alt={pelicula.titulo} className="movie-poster" />
       <div className="movie-details">
@@ -17,7 +30,7 @@ function PeliculaCard({ pelicula, onComprar }) {
             ))}
           </div>
         </div>
-        <button className="btn-buy" onClick={() => onComprar(pelicula)}>
+        <button className="btn-buy" onClick={abrirDetalle}>
           Conseguir Golden Ticket
         </button>
       </div>

@@ -1,6 +1,21 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { cerrarSesion, estaLogueado, guardarPaginaRetorno } from "../utils/auth";
 
 function Navbar() {
+  const navigate = useNavigate();
+  const logueado = estaLogueado();
+
+  function cuenta(e) {
+    e.preventDefault();
+
+    if (logueado) {
+      cerrarSesion();
+      navigate("/");
+    } else {
+      guardarPaginaRetorno("/compra");
+      navigate("/login");
+    }
+  }
   return (
     <header>
       <Link to="/" className="logo">
@@ -18,6 +33,14 @@ function Navbar() {
           </li>
           <li>
             <NavLink to="/candy">Candy</NavLink>
+          </li>
+          <li>
+            <Link to="/registro">Registrarse</Link>
+          </li>
+          <li>
+            <a href={logueado ? "/" : "/login"} onClick={cuenta}>
+              {logueado ? "Cerrar sesión" : "Iniciar sesión"}
+            </a>
           </li>
         </ul>
       </nav>

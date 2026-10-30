@@ -1,0 +1,843 @@
+/* ==================== COMPRA (ENTRADAS - BUTACAS - PAGO - QR) ==================== */
+/* Usa la base de pelicula.css (fuentes, modal, pantalla de carga) */
+
+.checkout-body {
+    background: #0b0b0b;
+    min-height: 100vh;
+    padding-bottom: 0;
+}
+
+
+/* Para ocultar elementos (gana sobre cualquier otro display) */
+.oculto {
+    display: none !important;
+}
+
+
+/* ---------- Barra superior ---------- */
+
+.checkout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 40px;
+    border-bottom: 1px solid #8b0000;
+    background: #080808;
+}
+
+.checkout-titulo {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.temporizador {
+    color: #ffde59;
+    margin-left: 6px;
+}
+
+.temporizador.urgente {
+    color: #ff6b6b;
+}
+
+.icono-btn {
+    width: 44px;
+    height: 40px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.icono-btn:hover {
+    border-color: #ffde59;
+    color: #ffde59;
+}
+
+.icono-btn.invisible {
+    visibility: hidden;
+}
+
+
+/* ---------- Indicador de pasos ---------- */
+
+.pasos {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 18px 20px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #777;
+}
+
+.paso-ind {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.paso-ind span {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.paso-ind.activo {
+    color: #ffde59;
+}
+
+.paso-ind.activo span {
+    background: #ffde59;
+    border-color: #ffde59;
+    color: #000;
+    font-weight: 800;
+}
+
+.paso-ind.hecho {
+    color: #aaa;
+}
+
+.paso-ind.hecho span {
+    border-color: #8b0000;
+    background: #8b0000;
+    color: #fff;
+}
+
+
+/* ---------- Estructura (principal + resumen) ---------- */
+
+.checkout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    align-items: start;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.checkout.sin-resumen {
+    grid-template-columns: 1fr;
+}
+
+.checkout.sin-resumen .resumen {
+    display: none;
+}
+
+.checkout-main {
+    padding: 35px 40px 60px;
+    min-width: 0;
+}
+
+.paso-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 1px;
+    color: #fff;
+    margin-bottom: 25px;
+}
+
+.paso-titulo.centrado {
+    text-align: center;
+}
+
+.subtitulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    color: #ffde59;
+    margin: 28px 0 14px;
+}
+
+
+/* ---------- Paso 1: entradas ---------- */
+
+.nivel-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 14px 18px;
+}
+
+.nivel-box p {
+    color: #ccc;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.nivel-badge {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: #000;
+    background: #cd7f32;
+}
+
+.nivel-badge.plata {
+    background: #c0c0c0;
+}
+
+.nivel-badge.dorado {
+    background: #ffde59;
+}
+
+.entrada-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    max-width: 520px;
+    background: #fff;
+    color: #000;
+    border-radius: 14px;
+    padding: 22px 26px;
+}
+
+.entrada-icono {
+    font-size: 34px;
+}
+
+.entrada-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 14px;
+}
+
+.entrada-info strong {
+    font-size: 18px;
+}
+
+.selector-cantidad {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.selector-cantidad button {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #8b0000;
+    border-radius: 50%;
+    background: transparent;
+    color: #8b0000;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.selector-cantidad button:hover:not(:disabled) {
+    background: #8b0000;
+    color: #fff;
+}
+
+.selector-cantidad button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.selector-cantidad span {
+    min-width: 22px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.promo-aviso {
+    margin-top: 16px;
+    max-width: 520px;
+    color: #ffde59;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 20px;
+}
+
+
+/* ---------- Paso 2: mapa de butacas ---------- */
+
+.ayuda {
+    color: #bbb;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+.pantalla-cine {
+    width: min(560px, 90%);
+    margin: 0 auto 35px;
+    padding: 8px 0;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 6px;
+    font-size: 16px;
+    color: #ddd;
+    background: linear-gradient(#555, #222);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    box-shadow: 0 -12px 30px rgba(255, 222, 89, 0.15);
+}
+
+.mapa-scroll {
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.mapa {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: max-content;
+    margin: 0 auto;
+}
+
+.fila {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.fila-letra {
+    width: 16px;
+    color: #ffde59;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.bloque {
+    display: flex;
+    gap: 6px;
+}
+
+.butaca,
+.butaca-demo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    padding: 0;
+    background: #4a0008;
+    transition: 0.2s;
+}
+
+.butaca {
+    cursor: pointer;
+    color: transparent;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.butaca:hover:not(:disabled):not(.seleccionada) {
+    background: #8b0000;
+    transform: scale(1.1);
+}
+
+.butaca.ocupada,
+.butaca-demo.ocupada {
+    background: #555;
+    cursor: not-allowed;
+}
+
+.butaca.seleccionada,
+.butaca-demo.seleccionada {
+    background: #ffde59;
+    color: #000;
+    box-shadow: 0 0 10px rgba(255, 222, 89, 0.6);
+}
+
+.butaca-demo {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+}
+
+.butaca-demo.disponible {
+    background: #4a0008;
+}
+
+.leyenda {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 28px;
+    color: #bbb;
+    font-size: 13px;
+}
+
+
+/* ---------- Paso 3: pago ---------- */
+
+.form-fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.campo {
+    margin-bottom: 16px;
+}
+
+.campo label {
+    display: block;
+    margin-bottom: 6px;
+    color: #ffde59;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.campo input {
+    width: 100%;
+    padding: 12px 14px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.campo input:focus {
+    border-color: #ffde59;
+    box-shadow: 0 0 8px rgba(255, 222, 89, 0.25);
+}
+
+.campo input.invalido {
+    border-color: #ff6b6b;
+}
+
+.metodos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.metodo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #151515;
+    border: 1px solid #444;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.metodo:hover {
+    border-color: #ffde59;
+}
+
+.metodo input {
+    accent-color: #ffde59;
+}
+
+.metodo:has(input:checked) {
+    border-color: #ffde59;
+    background: #1f1a0a;
+}
+
+.panel-pago {
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 22px;
+    max-width: 560px;
+}
+
+.panel-pago p {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.nota-demo {
+    margin-top: 6px;
+    font-size: 12px !important;
+    color: #999 !important;
+}
+
+.error-compra {
+    color: #ff6b6b;
+    font-size: 13px;
+    min-height: 20px;
+    margin-top: 14px;
+}
+
+
+/* ---------- Paso 4: confirmación ---------- */
+
+.confirmacion {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.conf-sub {
+    text-align: center;
+    color: #bbb;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.conf-nivel {
+    text-align: center;
+    color: #ffde59;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.ticket {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    background: #151515;
+    border: 2px solid #ffde59;
+    border-radius: 14px;
+    padding: 26px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+}
+
+.ticket-qr {
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px;
+}
+
+.ticket-qr canvas {
+    display: block;
+    width: 190px;
+    height: 190px;
+}
+
+.ticket-datos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    min-width: 0;
+}
+
+.ticket-datos .t-pelicula {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: #ffde59;
+    line-height: 1.1;
+}
+
+.ticket-datos small {
+    display: block;
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ticket-datos .t-codigo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 3px;
+}
+
+.conf-botones {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 28px;
+}
+
+.btn-principal,
+.btn-secundario {
+    display: inline-block;
+    padding: 13px 28px;
+    border-radius: 6px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-principal {
+    background: #8b0000;
+    border: 2px solid #8b0000;
+    color: #fff;
+}
+
+.btn-principal:hover {
+    background: #ffde59;
+    border-color: #ffde59;
+    color: #000;
+}
+
+.btn-secundario {
+    background: transparent;
+    border: 2px solid #ffde59;
+    color: #ffde59;
+}
+
+.btn-secundario:hover {
+    background: #ffde59;
+    color: #000;
+}
+
+.modal-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px;
+    letter-spacing: 1px;
+    color: #ffde59;
+    margin-bottom: 12px;
+}
+
+.modal-texto {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 22px;
+}
+
+
+/* ---------- Resumen (columna derecha) ---------- */
+
+.resumen {
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 120px);
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    background: #0e0e0e;
+    border-left: 1px solid #222;
+}
+
+.resumen-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 28px 20px;
+}
+
+.resumen-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+}
+
+.res-bloque {
+    padding: 16px 0;
+    border-bottom: 1px solid #262626;
+}
+
+.res-bloque h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.res-item {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.res-poster {
+    width: 56px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #222;
+}
+
+.res-icono {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #1d1d1d;
+    border-radius: 10px;
+}
+
+.res-texto strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.res-texto span {
+    display: block;
+    color: #999;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.res-linea {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.res-linea.descuento {
+    color: #7ddc8a;
+}
+
+.res-linea.total {
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    padding-top: 10px;
+}
+
+.resumen-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 28px;
+    background: #ffde59;
+    color: #000;
+}
+
+.barra-total {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+}
+
+.barra-icono {
+    font-size: 16px;
+}
+
+#btnContinuar {
+    border: none;
+    background: #000;
+    color: #ffde59;
+    padding: 11px 22px;
+    border-radius: 6px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 19px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#btnContinuar:hover:not(:disabled) {
+    background: #8b0000;
+    color: #fff;
+}
+
+#btnContinuar:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+
+/* ---------- Celular / pantallas chicas ---------- */
+
+@media (max-width: 900px) {
+
+    .checkout {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-header {
+        padding: 14px 18px;
+    }
+
+    .checkout-main {
+        padding: 25px 18px 30px;
+    }
+
+    .paso-titulo {
+        font-size: 32px;
+    }
+
+    .resumen {
+        position: static;
+        height: auto;
+        min-height: 0;
+        border-left: none;
+        border-top: 1px solid #222;
+        padding-bottom: 80px;
+    }
+
+    .resumen-scroll {
+        overflow: visible;
+    }
+
+    .resumen-barra {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+    }
+
+    .pasos {
+        gap: 14px;
+        font-size: 11px;
+    }
+
+    .form-fila {
+        grid-template-columns: 1fr;
+    }
+
+    .ticket {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    /* En el celular las butacas son más chicas para que entre todo el mapa */
+    .butaca {
+        width: 18px;
+        height: 22px;
+        border-radius: 4px;
+        font-size: 8px;
+    }
+
+    .mapa {
+        gap: 6px;
+    }
+
+    .fila {
+        gap: 8px;
+    }
+
+    .bloque {
+        gap: 3px;
+    }
+}

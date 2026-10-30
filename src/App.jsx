@@ -5,6 +5,13 @@ import Footer from "./componentes/Footer";
 import Planes from "./paginas/Planes";
 import Candy from "./paginas/Candy";
 
+import Pelicula from "./paginas/Pelicula";
+import Terrifier from "./paginas/Terrifier";
+import Odisea from "./paginas/Odisea";
+import Spiderman from "./paginas/Spiderman";
+import Login from "./paginas/Login";
+import Registro from "./paginas/Registro";
+import Compra from "./paginas/Compra";
 
  import Inicio from "./paginas/Inicio";
 
@@ -34,7 +41,14 @@ function App() {
             ───────────────────────────────────────────────────────── */}
         <Route path="/" element={< Inicio/>} />
         {/* <Route path="/" element={<Inicio />} /> */}
+        <Route path="/pelicula/avatar" element={<Pelicula />} />
+        <Route path="/pelicula/terrifier" element={<Terrifier />} />
+        <Route path="/pelicula/odisea" element={<Odisea />} />
+        <Route path="/pelicula/spiderman" element={<Spiderman />} />
 
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/compra" element={<Compra />} />
         {/* Estas dos NO se tocan */}
         <Route path="/planes" element={<Planes />} />
         <Route path="/candy" element={<Candy />} />
