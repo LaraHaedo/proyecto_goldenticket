@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    match /usuarios/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.rol == 'usuario'
+        && request.resource.data.email == request.auth.token.email;
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.rol == resource.data.rol
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email;
+      allow delete: if isAdmin();
+    }
+
+    // El contenido público se puede consultar; solamente el administrador puede modificarlo.
+    match /peliculas/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /horarios/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /candy/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /beneficios/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Todo lo que no esté contemplado queda denegado por defecto.
+  }
+}
