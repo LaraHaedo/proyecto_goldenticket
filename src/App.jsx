@@ -12,6 +12,7 @@ import Spiderman from "./paginas/Spiderman";
 import Login from "./paginas/Login";
 import Registro from "./paginas/Registro";
 import Compra from "./paginas/Compra";
+import Admin from "./paginas/Admin";
 
  import Inicio from "./paginas/Inicio";
 
@@ -49,6 +50,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/compra" element={<Compra />} />
+        <Route path="/admin" element={<Admin />} />
         {/* Estas dos NO se tocan */}
         <Route path="/planes" element={<Planes />} />
         <Route path="/candy" element={<Candy />} />
