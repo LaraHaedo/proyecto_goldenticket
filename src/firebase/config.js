@@ -5,7 +5,7 @@ import { getFirestore } from "firebase/firestore";
 // Configuración de la aplicación web GoldenTicket.
 // Estos datos identifican la aplicación Firebase; no son contraseñas de usuarios.
 const firebaseConfig = {
-  apiKey: "AIzaSyDvXZwDj2rQCD70TJKOa9p3QdHS_G3Uzj0",
+  apiKey: "AIzaSyDvXZwDj2rCQDZ0IJKoa9p3QdHS_G3Uzj0",
   authDomain: "goldenticket-61b02.firebaseapp.com",
   projectId: "goldenticket-61b02",
   storageBucket: "goldenticket-61b02.firebasestorage.app",
