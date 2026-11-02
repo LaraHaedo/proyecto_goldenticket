@@ -45,6 +45,8 @@ function Registro() {
         nombre: nombre.trim(),
         email: emailNormalizado,
         rol: "usuario",
+        plan: "bronze",
+        estadoPlan: "activo",
         compras: 0,
         gratis: null,
         creadoEn: serverTimestamp(),
