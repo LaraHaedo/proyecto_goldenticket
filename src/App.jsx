@@ -15,7 +15,10 @@ import Compra from "./paginas/Compra";
 import Admin from "./paginas/Admin";
 
  import Inicio from "./paginas/Inicio";
-
+import { cargarProductosCandy } from "./datos/cargarProductosCandy";
+<button onClick={cargarProductosCandy}>
+  Cargar productos Candy en Firestore
+</button>
 // Al cambiar de página, volvemos arriba de todo (NO TOCAR)
 function ScrollArriba() {
   const { pathname } = useLocation();

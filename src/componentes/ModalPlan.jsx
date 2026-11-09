@@ -197,18 +197,18 @@ function ModalPlan({ plan, abierto, onCerrar }) {
                   <div className="payment-methods">
                     <button
                       type="button"
-                      className={`payment-method ${metodo === "tarjeta" ? "selected" : ""}`}
-                      onClick={() => setMetodo("tarjeta")}
-                    >
-                      💳 Tarjeta
-                    </button>
-
-                    <button
-                      type="button"
                       className={`payment-method ${metodo === "mercadopago" ? "selected" : ""}`}
                       onClick={() => setMetodo("mercadopago")}
                     >
                       💙 Mercado Pago
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`payment-method ${metodo === "tarjeta" ? "selected" : ""}`}
+                      onClick={() => setMetodo("tarjeta")}
+                    >
+                      💳 Tarjeta
                     </button>
                   </div>
                 </div>

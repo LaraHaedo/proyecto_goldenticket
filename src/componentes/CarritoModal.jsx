@@ -1,12 +1,12 @@
 import { formatearPrecio } from "../utilidades";
 
-function CarritoModal({ abierto, carrito, total, onCerrar, onCambiarCantidad, onFinalizar }) {
+function CarritoModal({ abierto, carrito, total, comprando = false, onCerrar, onCambiarCantidad, onFinalizar }) {
   return (
     <div className={`cart-modal-overlay ${abierto ? "open" : ""}`}>
       <div className="cart-modal">
         <div className="cart-header">
           <h2>🎟️ Resumen de tu Candy</h2>
-          <button className="close-modal" onClick={onCerrar}>&times;</button>
+          <button className="close-modal" onClick={onCerrar} disabled={comprando}>&times;</button>
         </div>
 
         <div className="cart-items">
@@ -28,9 +28,9 @@ function CarritoModal({ abierto, carrito, total, onCerrar, onCambiarCantidad, on
                 </div>
 
                 <div className="qty-controls">
-                  <button className="qty-btn" onClick={() => onCambiarCantidad(item.id, -1)}>-</button>
+                  <button className="qty-btn" onClick={() => onCambiarCantidad(item.id, -1)} disabled={comprando}>-</button>
                   <span>{item.cantidad}</span>
-                  <button className="qty-btn" onClick={() => onCambiarCantidad(item.id, 1)}>+</button>
+                  <button className="qty-btn" onClick={() => onCambiarCantidad(item.id, 1)} disabled={comprando || item.cantidad >= item.stock}>+</button>
                 </div>
               </div>
             ))
@@ -42,7 +42,7 @@ function CarritoModal({ abierto, carrito, total, onCerrar, onCambiarCantidad, on
             <span>Total a pagar:</span>
             <span>${formatearPrecio(total)}</span>
           </div>
-          <button className="checkout-btn" onClick={onFinalizar}>Confirmar y Pagar</button>
+          <button className="checkout-btn" onClick={onFinalizar} disabled={comprando || carrito.length === 0}>{comprando ? "CONFIRMANDO..." : "CONFIRMAR COMPRA"}</button>
         </div>
       </div>
     </div>
