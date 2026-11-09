@@ -1,55 +1,96 @@
 
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
-require("dotenv").config();
 
+const { MercadoPagoConfig, Preference, Payment } = require("mercadopago");
 const { db, auth, FieldValue } = require("./firebaseAdmin");
-const { MercadoPagoConfig, PreApproval } = require("mercadopago");
 
 const app = express();
-
-// ------------------------------------
-// CONFIGURACIÓN
-// ------------------------------------
-
 const PORT = process.env.PORT || 3000;
 
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || "http://localhost:5173";
-console.log("URL del frontend:", FRONTEND_URL);
-console.log("URL de retorno MP:", `${FRONTEND_URL.replace(/\/+$/, "")}/planes`);
+const FRONTEND_URL = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((url) => url.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
 
-const mpClient = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN,
-});
+const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/+$/, "");
 
-const preApproval = new PreApproval(mpClient);
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET;
 
-const planes = {
+// --------------------------------------------------
+// CONFIGURACIÓN
+// --------------------------------------------------
+
+const PLANES = {
+  bronze: {
+    nombre: "Bronze",
+    precio: 0,
+  },
   silver: {
-    nombre: "GoldenTicket Silver",
+    nombre: "Silver",
     precio: 7999,
   },
   golden: {
-    nombre: "GoldenTicket Golden",
+    nombre: "Golden",
     precio: 11999,
   },
 };
 
-// ------------------------------------
-// MIDDLEWARE
-// ------------------------------------
+if (!MP_ACCESS_TOKEN) {
+  console.error("Falta configurar MP_ACCESS_TOKEN en el .env");
+}
 
-app.use(cors({
-  origin: FRONTEND_URL.split(",").map(url => url.trim()),
-}));
+if (!BACKEND_URL) {
+  console.error("Falta configurar BACKEND_URL en el .env");
+}
+
+if (!MP_WEBHOOK_SECRET) {
+  console.error("Falta configurar MP_WEBHOOK_SECRET en el .env");
+}
+
+if (!FRONTEND_URL.length) {
+  console.error("Falta configurar FRONTEND_URL en el .env");
+}
+
+const mpClient = MP_ACCESS_TOKEN
+  ? new MercadoPagoConfig({
+      accessToken: MP_ACCESS_TOKEN,
+    })
+  : null;
+
+const preference = mpClient ? new Preference(mpClient) : null;
+const payment = mpClient ? new Payment(mpClient) : null;
+
+// --------------------------------------------------
+// MIDDLEWARE
+// --------------------------------------------------
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Permite herramientas sin origen, como Postman.
+      if (!origin) return callback(null, true);
+
+      if (FRONTEND_URL.includes(origin.replace(/\/+$/, ""))) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Origen no permitido por CORS"));
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 
-// ------------------------------------
+// --------------------------------------------------
 // AUTENTICACIÓN FIREBASE
-// ------------------------------------
+// --------------------------------------------------
 
 async function verificarUsuario(req, res, next) {
   try {
@@ -57,402 +98,563 @@ async function verificarUsuario(req, res, next) {
 
     if (!authorization || !authorization.startsWith("Bearer ")) {
       return res.status(401).json({
-        error: "No estás autenticado",
+        error: "No se recibió el token de autenticación",
       });
     }
 
     const token = authorization.split(" ")[1];
-    req.usuario = await auth.verifyIdToken(token);
+
+    const usuario = await auth.verifyIdToken(token);
+
+    req.usuario = usuario;
 
     next();
   } catch (error) {
-    console.error("Error verificando Firebase:", error.message);
+    console.error("Error verificando usuario:", error.message);
 
     return res.status(401).json({
-      error: "La sesión no es válida. Volvé a iniciar sesión.",
+      error: "Token inválido o sesión vencida",
     });
   }
 }
 
-// ------------------------------------
-// VALIDACIÓN FIRMA MERCADO PAGO
-// ------------------------------------
+// --------------------------------------------------
+// VALIDACIÓN DE FIRMA DE MERCADO PAGO
+// --------------------------------------------------
 
 function validarFirmaMercadoPago(req) {
-  const secret = process.env.MP_WEBHOOK_SECRET;
-
-  if (!secret) {
-    console.error("Falta MP_WEBHOOK_SECRET");
-    return false;
-  }
-
-  const signature = req.headers["x-signature"];
-  const requestId = req.headers["x-request-id"];
-
-  if (!signature || !requestId) return false;
-
-  const partes = {};
-
-  signature.split(",").forEach(parte => {
-    const [clave, valor] = parte.trim().split("=");
-
-    if (clave && valor) partes[clave] = valor;
-  });
-
-  const ts = partes.ts;
-  const v1 = partes.v1;
-
-  const dataId =
-    req.query["data.id"] ||
-    req.query.id ||
-    req.body?.data?.id;
-
-  if (!ts || !v1 || !dataId) return false;
-
-  const manifest =
-    `id:${String(dataId).toLowerCase()};` +
-    `request-id:${requestId};` +
-    `ts:${ts};`;
-
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(manifest)
-    .digest("hex");
-
   try {
-    const expectedBuffer = Buffer.from(expected, "hex");
-    const receivedBuffer = Buffer.from(v1, "hex");
+    if (!MP_WEBHOOK_SECRET) return false;
 
-    if (expectedBuffer.length !== receivedBuffer.length) {
-      return false;
-    }
+    const signature = req.headers["x-signature"];
+    const requestId = req.headers["x-request-id"];
 
-    return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
-  } catch {
+    if (!signature || !requestId) return false;
+
+    const dataId =
+      req.query["data.id"] ||
+      req.body?.data?.id ||
+      req.body?.id;
+
+    if (!dataId) return false;
+
+    const partes = {};
+
+    signature.split(",").forEach((parte) => {
+      const [clave, valor] = parte.trim().split("=");
+
+      if (clave && valor) {
+        partes[clave] = valor;
+      }
+    });
+
+    const timestamp = partes.ts;
+    const firmaRecibida = partes.v1;
+
+    if (!timestamp || !firmaRecibida) return false;
+
+    const manifest =
+      `id:${String(dataId).toLowerCase()};` +
+      `request-id:${requestId};` +
+      `ts:${timestamp};`;
+
+    const firmaCalculada = crypto
+      .createHmac("sha256", MP_WEBHOOK_SECRET)
+      .update(manifest)
+      .digest("hex");
+
+    const recibida = Buffer.from(firmaRecibida, "hex");
+    const calculada = Buffer.from(firmaCalculada, "hex");
+
+    if (recibida.length !== calculada.length) return false;
+
+    return crypto.timingSafeEqual(recibida, calculada);
+  } catch (error) {
+    console.error("Error validando firma:", error.message);
     return false;
   }
 }
 
-// ------------------------------------
-// RUTA PRINCIPAL
-// ------------------------------------
+// --------------------------------------------------
+// RUTA DE PRUEBA DEL SERVIDOR
+// --------------------------------------------------
 
 app.get("/", (req, res) => {
-  res.send("Servidor de GoldenTicket funcionando");
+  res.json({
+    mensaje: "Backend de GoldenTicket funcionando",
+  });
 });
 
-// ------------------------------------
-// PRUEBA FIREBASE
-// ------------------------------------
+// --------------------------------------------------
+// PRUEBA DE FIREBASE
+// --------------------------------------------------
 
-app.get("/api/prueba-firebase", async (req, res) => {
+app.get("/api/prueba-firebase", verificarUsuario, async (req, res) => {
   try {
-    const prueba = await db.collection("usuarios").limit(1).get();
+    const usuarioRef = db.collection("usuarios").doc(req.usuario.uid);
+    const usuarioDoc = await usuarioRef.get();
 
-    res.json({
-      conectado: true,
-      mensaje: "Firebase conectado correctamente",
-      documentosEncontrados: prueba.size,
+    return res.json({
+      correcto: true,
+      uid: req.usuario.uid,
+      existeEnFirestore: usuarioDoc.exists,
+      datos: usuarioDoc.exists ? usuarioDoc.data() : null,
     });
   } catch (error) {
-    console.error("Error Firebase:", error);
+    console.error("Error probando Firebase:", error);
 
-    res.status(500).json({
-      conectado: false,
-      mensaje: "No se pudo conectar con Firebase",
+    return res.status(500).json({
+      error: "No se pudo consultar Firebase",
     });
   }
 });
 
+// --------------------------------------------------
+// COMPRA DE CANDY: descuento de stock atómico en Firestore
+// --------------------------------------------------
+app.post("/api/candy/compra", verificarUsuario, async (req, res) => {
+  try {
+    const items = req.body?.items;
+    if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
+      return res.status(400).json({ error: "El carrito no es válido." });
+    }
 
-// ------------------------------------
-// ACTIVACIÓN DE PLAN CON FORMULARIO VISUAL
-// SOLO PARA DESARROLLO LOCAL
-// ------------------------------------
+    const cantidades = new Map();
+    for (const item of items) {
+      const id = String(item?.id || "").trim();
+      const cantidad = Number(item?.cantidad);
+      if (!id || !Number.isInteger(cantidad) || cantidad < 1 || cantidad > 50) {
+        return res.status(400).json({ error: "Hay un producto o cantidad inválida." });
+      }
+      cantidades.set(id, (cantidades.get(id) || 0) + cantidad);
+    }
+
+    const referencias = [...cantidades.keys()].map((id) => db.collection("candy").doc(id));
+    const pedidoRef = db.collection("pedidos_candy").doc();
+    let total = 0;
+    const detallePedido = [];
+
+    await db.runTransaction(async (transaction) => {
+      // Firestore puede reintentar el callback; reiniciamos los acumuladores.
+      total = 0;
+      detallePedido.length = 0;
+      const documentos = [];
+      for (const referencia of referencias) {
+        documentos.push(await transaction.get(referencia));
+      }
+
+      documentos.forEach((documento, indice) => {
+        if (!documento.exists) throw new Error("Uno de los productos ya no existe.");
+        const producto = documento.data();
+        const cantidad = cantidades.get(documento.id);
+        const stock = Number(producto.stock || 0);
+
+        if (producto.activo === false) throw new Error(`${producto.nombre}: producto no disponible.`);
+        if (stock < cantidad) throw new Error(`Stock insuficiente para ${producto.nombre}. Disponibles: ${stock}.`);
+
+        const subtotal = Number(producto.precio) * cantidad;
+        if (!Number.isFinite(subtotal) || subtotal < 0) throw new Error("Precio inválido.");
+        total += subtotal;
+        detallePedido.push({
+          productoId: documento.id,
+          nombre: producto.nombre,
+          precio: Number(producto.precio),
+          cantidad,
+          subtotal,
+        });
+      });
+
+      documentos.forEach((documento, indice) => {
+        const cantidad = cantidades.get(documento.id);
+        transaction.update(documento.ref, {
+          stock: Number(documento.data().stock || 0) - cantidad,
+          actualizadoEn: FieldValue.serverTimestamp(),
+        });
+      });
+
+      transaction.set(pedidoRef, {
+        uid: req.usuario.uid,
+        items: detallePedido,
+        total,
+        estado: "confirmado",
+        creadoEn: FieldValue.serverTimestamp(),
+      });
+    });
+
+    return res.status(200).json({
+      correcto: true,
+      pedidoId: pedidoRef.id,
+      total,
+      mensaje: "Compra confirmada y stock actualizado.",
+    });
+  } catch (error) {
+    console.error("Error en compra de Candy:", error);
+    const conflicto = /stock insuficiente|no disponible|no existe|inválido/i.test(error.message);
+    return res.status(conflicto ? 409 : 500).json({
+      error: error.message || "No se pudo confirmar la compra.",
+    });
+  }
+});
+
+// --------------------------------------------------
+// PAGO ÚNICO DE PRUEBA CON CHECKOUT PRO
+// --------------------------------------------------
+
+app.post("/api/suscripciones", verificarUsuario, async (req, res) => {
+  try {
+    // Esta ruta es exclusivamente para pruebas.
+    if (
+      process.env.NODE_ENV === "production" ||
+      process.env.ENABLE_DEMO_CHECKOUT !== "true"
+    ) {
+      return res.status(403).json({
+        error: "El checkout de demostración no está habilitado",
+      });
+    }
+
+    if (!preference || !BACKEND_URL || !FRONTEND_URL.length) {
+      return res.status(500).json({
+        error: "Falta configurar Mercado Pago o las URLs del servidor",
+      });
+    }
+
+    const { plan } = req.body;
+
+    const planElegido = String(plan || "").toLowerCase();
+    const datosPlan = PLANES[planElegido];
+
+    if (!datosPlan || planElegido === "bronze") {
+      return res.status(400).json({
+        error: "El plan seleccionado no es válido",
+      });
+    }
+
+    const uid = req.usuario.uid;
+
+    // Guardamos la preferencia para poder verificar el pago
+    // cuando Mercado Pago envíe la notificación.
+    const resultado = await preference.create({
+      body: {
+        items: [
+          {
+            id: planElegido,
+            title: `GoldenTicket - Plan ${datosPlan.nombre}`,
+            description: "Pago único de prueba",
+            quantity: 1,
+            currency_id: "ARS",
+            unit_price: datosPlan.precio,
+          },
+        ],
+
+        external_reference: uid,
+
+        metadata: {
+          uid,
+          plan: planElegido,
+          modo_demo: true,
+        },
+
+        back_urls: {
+          success: `${FRONTEND_URL[0]}/planes?estado=aprobado`,
+          failure: `${FRONTEND_URL[0]}/planes?estado=rechazado`,
+          pending: `${FRONTEND_URL[0]}/planes?estado=pendiente`,
+        },
+
+        auto_return: "approved",
+
+        notification_url:
+          `${BACKEND_URL}/api/webhooks/mercadopago`,
+      },
+    });
+
+    // No usamos init_point como alternativa:
+    // eso podría enviar al checkout de producción.
+    if (!resultado.sandbox_init_point) {
+      console.error(
+        "Mercado Pago no devolvió sandbox_init_point:",
+        resultado
+      );
+
+      return res.status(500).json({
+        error:
+          "Mercado Pago no devolvió una URL de pago de prueba. Revisá que el token sea de prueba.",
+      });
+    }
+
+    // Guardamos la relación entre preferencia, usuario y plan.
+    await db
+      .collection("preferencias_demo")
+      .doc(String(resultado.id))
+      .set({
+        uid,
+        plan: planElegido,
+        precio: datosPlan.precio,
+        moneda: "ARS",
+        preferenciaMP: String(resultado.id),
+        estado: "creada",
+        creadoEn: FieldValue.serverTimestamp(),
+      });
+
+    return res.json({
+      correcto: true,
+      url: resultado.sandbox_init_point,
+      preferenciaId: resultado.id,
+    });
+  } catch (error) {
+    console.error(
+      "Error creando checkout:",
+      error.message,
+      error.cause || ""
+    );
+
+    return res.status(500).json({
+      error: "No se pudo crear el pago de prueba",
+      detalle: error.message,
+    });
+  }
+});
+
+// --------------------------------------------------
+// WEBHOOK DE MERCADO PAGO
+// --------------------------------------------------
+
+app.post("/api/webhooks/mercadopago", async (req, res) => {
+  try {
+    // Primero validamos que la notificación sea auténtica.
+    if (!validarFirmaMercadoPago(req)) {
+      console.error("Webhook rechazado: firma inválida");
+
+      return res.status(401).json({
+        error: "Firma de Mercado Pago inválida",
+      });
+    }
+
+    const tipo =
+      req.query.type ||
+      req.body?.type ||
+      req.body?.action;
+
+    const dataId =
+      req.query["data.id"] ||
+      req.body?.data?.id ||
+      req.body?.id;
+
+    if (tipo !== "payment" && !String(tipo || "").startsWith("payment.")) {
+      return res.status(200).json({
+        recibido: true,
+        ignorado: true,
+      });
+    }
+
+    if (!dataId || !payment) {
+      return res.status(400).json({
+        error: "No se recibió el identificador del pago",
+      });
+    }
+
+    // Consultamos el pago directamente en Mercado Pago.
+    const pago = await payment.get({
+      id: dataId,
+    });
+
+    // Solo procesamos pagos aprobados.
+    if (pago.status !== "approved") {
+      return res.status(200).json({
+        recibido: true,
+        estado: pago.status,
+        mensaje: "El pago todavía no está aprobado",
+      });
+    }
+
+    // Impedimos activar planes con pagos reales.
+    if (pago.live_mode !== false) {
+      console.error("Se rechazó un pago que no es de prueba");
+
+      return res.status(400).json({
+        error: "El pago no pertenece al entorno de prueba",
+      });
+    }
+
+    const uid = pago.external_reference;
+    const preferenceId = String(pago.preference_id || "");
+
+    if (!uid || !preferenceId) {
+      return res.status(400).json({
+        error: "El pago no contiene los datos necesarios",
+      });
+    }
+
+    // Buscamos la preferencia que GoldenTicket creó.
+    const preferenciaRef = db
+      .collection("preferencias_demo")
+      .doc(preferenceId);
+
+    const preferenciaDoc = await preferenciaRef.get();
+
+    if (!preferenciaDoc.exists) {
+      return res.status(400).json({
+        error: "No se encontró la preferencia original",
+      });
+    }
+
+    const datosPreferencia = preferenciaDoc.data();
+
+    // Comprobamos que coincidan usuario, plan e importe.
+    if (datosPreferencia.uid !== uid) {
+      return res.status(400).json({
+        error: "El usuario del pago no coincide",
+      });
+    }
+
+    if (pago.currency_id !== "ARS") {
+      return res.status(400).json({
+        error: "La moneda del pago no es válida",
+      });
+    }
+
+    if (
+      Number(pago.transaction_amount) !==
+      Number(datosPreferencia.precio)
+    ) {
+      return res.status(400).json({
+        error: "El importe del pago no coincide",
+      });
+    }
+
+    const plan = datosPreferencia.plan;
+
+    if (!PLANES[plan] || plan === "bronze") {
+      return res.status(400).json({
+        error: "El plan del pago no es válido",
+      });
+    }
+
+    const pagoRef = db
+      .collection("pagos_demo")
+      .doc(String(pago.id));
+
+    const usuarioRef = db.collection("usuarios").doc(uid);
+
+    // Transacción: evita procesar dos veces el mismo pago.
+    await db.runTransaction(async (transaction) => {
+      const pagoDoc = await transaction.get(pagoRef);
+
+      if (pagoDoc.exists) {
+        return;
+      }
+
+      const usuarioDoc = await transaction.get(usuarioRef);
+
+      if (!usuarioDoc.exists) {
+        throw new Error("El usuario no existe en Firestore");
+      }
+
+      transaction.update(usuarioRef, {
+        plan,
+        estadoPlan: "activo",
+        metodoPago: "mercado_pago",
+        modoDemo: true,
+        pagoDemoMP: String(pago.id),
+        actualizadoEn: FieldValue.serverTimestamp(),
+      });
+
+      transaction.set(pagoRef, {
+        uid,
+        plan,
+        importe: Number(pago.transaction_amount),
+        moneda: pago.currency_id,
+        pagoMP: String(pago.id),
+        preferenciaMP: preferenceId,
+        estado: "aprobado",
+        modoDemo: true,
+        procesadoEn: FieldValue.serverTimestamp(),
+      });
+
+      transaction.update(preferenciaRef, {
+        estado: "pagada",
+        pagoMP: String(pago.id),
+        actualizadoEn: FieldValue.serverTimestamp(),
+      });
+    });
+
+    console.log(
+      `Pago de prueba ${pago.id} procesado para el usuario ${uid}`
+    );
+
+    return res.status(200).json({
+      recibido: true,
+      procesado: true,
+    });
+  } catch (error) {
+    console.error("Error procesando webhook:", error);
+
+    return res.status(500).json({
+      error: "No se pudo procesar la notificación",
+    });
+  }
+});
+
+// --------------------------------------------------
+// ACTIVACIÓN MANUAL DE DEMOSTRACIÓN
+// Solo para desarrollo local.
+// --------------------------------------------------
 
 app.post(
   "/api/suscripciones/demo",
   verificarUsuario,
   async (req, res) => {
     try {
-      // Esta modalidad debe estar deshabilitada en producción.
       if (
         process.env.NODE_ENV === "production" ||
         process.env.ENABLE_DEMO_CHECKOUT !== "true"
       ) {
         return res.status(403).json({
-          error: "Esta modalidad no está disponible.",
+          error: "La demostración no está habilitada",
         });
       }
 
-      const { plan } = req.body;
-      const uid = req.usuario.uid;
+      const plan = String(req.body.plan || "").toLowerCase();
 
-      if (!planes[plan]) {
+      if (!PLANES[plan] || plan === "bronze") {
         return res.status(400).json({
-          error: "El plan seleccionado no es válido.",
+          error: "Plan inválido",
         });
       }
 
-      const usuarioRef = db.collection("usuarios").doc(uid);
-      const usuarioDoc = await usuarioRef.get();
+      const usuarioRef = db
+        .collection("usuarios")
+        .doc(req.usuario.uid);
 
-      if (!usuarioDoc.exists) {
-        return res.status(404).json({
-          error: "No encontramos tu usuario en GoldenTicket.",
-        });
-      }
-
-      // No recibimos ni almacenamos datos de tarjeta.
-      await usuarioRef.set({
-        plan,
-        estadoPlan: "activo",
-        metodoPago: "demo_tarjeta",
-        modoDemo: true,
-        actualizadoEn: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      await usuarioRef.set(
+        {
+          plan,
+          estadoPlan: "activo",
+          metodoPago: "demo",
+          modoDemo: true,
+          actualizadoEn: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       return res.json({
         correcto: true,
-        mensaje: "Plan activado en modo demostración.",
+        mensaje: "Plan de demostración activado",
         plan,
       });
-
     } catch (error) {
-      console.error("Error en activación demostrativa:", error);
+      console.error("Error activando demo:", error);
 
       return res.status(500).json({
-        error: "No se pudo activar el plan.",
+        error: "No se pudo activar el plan de demostración",
       });
     }
   }
 );
 
-// ------------------------------------
-// CREAR SUSCRIPCIÓN
-// ------------------------------------
-
-app.post("/api/suscripciones", verificarUsuario, async (req, res) => {
-  try {
-    const { plan } = req.body;
-    const uid = req.usuario.uid;
-
-    if (!planes[plan]) {
-      return res.status(400).json({
-        error: "El plan seleccionado no es válido",
-      });
-    }
-
-    // Obtener el usuario desde Firestore
-    const usuarioRef = db.collection("usuarios").doc(uid);
-    const usuarioDoc = await usuarioRef.get();
-
-    if (!usuarioDoc.exists) {
-      return res.status(404).json({
-        error: "No encontramos tu usuario en GoldenTicket",
-      });
-    }
-
-    const datosUsuario = usuarioDoc.data();
-    console.log("UID autenticado:", uid);
-    console.log("Usuario encontrado en Firestore:", usuarioDoc.exists);
-    console.log("Campos disponibles:", Object.keys(datosUsuario));
-    console.log("Email de Firestore:", datosUsuario.email);
-    console.log("Email de Firebase Auth:", req.usuario.email);
-    const email = datosUsuario.email || req.usuario.email;
-
-    if (!email) {
-      return res.status(400).json({
-        error: "Falta el email de tu cuenta. Revisá tu perfil de usuario.",
-      });
-    }
-
-    const datosPlan = planes[plan];
-
-    // Crear suscripción mensual en Mercado Pago
-    const suscripcion = await preApproval.create({
-      body: {
-        reason: datosPlan.nombre,
-        external_reference: uid,
-        payer_email: email,
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
-          transaction_amount: datosPlan.precio,
-          currency_id: "ARS",
-        },
-        back_url: `${FRONTEND_URL.replace(/\/+$/, "")}/planes`,
-        status: "pending",
-      },
-    });
-
-    if (!suscripcion.id || !suscripcion.init_point) {
-      console.error("Respuesta inesperada de Mercado Pago:", suscripcion);
-
-      throw new Error("Mercado Pago no devolvió el enlace de suscripción");
-    }
-
-    // Guardar la suscripción pendiente
-    await usuarioRef.set({
-      plan,
-      estadoPlan: "pendiente",
-      metodoPago: "mercado_pago",
-      suscripcionMP: String(suscripcion.id),
-      actualizadoEn: FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    return res.json({
-      id: suscripcion.id,
-      url: suscripcion.init_point,
-    });
-
-  } catch (error) {
-    console.error("Error creando suscripción:", error);
-
-    return res.status(500).json({
-      error: error.message || "No se pudo crear la suscripción",
-    });
-  }
-});
-
-// ------------------------------------
-// WEBHOOK MERCADO PAGO
-// ------------------------------------
-
-app.post("/api/webhooks/mercadopago", async (req, res) => {
-  try {
-    console.log("Notificación recibida de Mercado Pago");
-
-    if (!validarFirmaMercadoPago(req)) {
-      console.error("Firma de Mercado Pago inválida");
-
-      return res.status(401).json({
-        error: "Firma de webhook inválida",
-      });
-    }
-
-    const tipo = req.query.type || req.body.type;
-
-    const dataId =
-      req.query["data.id"] ||
-      req.query.id ||
-      req.body?.data?.id;
-
-    console.log("Tipo de evento:", tipo);
-    console.log("ID recibido:", dataId);
-
-    if (tipo !== "subscription_preapproval") {
-      return res.status(200).json({
-        mensaje: "Evento recibido, sin procesamiento",
-      });
-    }
-
-    if (!dataId) {
-      return res.status(400).json({
-        error: "Falta el ID de la suscripción",
-      });
-    }
-
-    // Consultar la información real en Mercado Pago
-    const suscripcion = await preApproval.get({
-      id: String(dataId),
-    });
-
-    const uid = suscripcion.external_reference;
-
-    if (!uid) {
-      return res.status(200).json({
-        mensaje: "Suscripción sin usuario asociado",
-      });
-    }
-
-    // Comprobar que el plan y el monto sean correctos
-    const planEncontrado = Object.entries(planes).find(
-      ([clave, datos]) =>
-        suscripcion.reason === datos.nombre &&
-        Number(suscripcion.auto_recurring?.transaction_amount) === datos.precio &&
-        suscripcion.auto_recurring?.currency_id === "ARS"
-    );
-
-    if (!planEncontrado) {
-      console.error("Plan, monto o moneda no coinciden");
-
-      return res.status(200).json({
-        mensaje: "Suscripción no válida para GoldenTicket",
-      });
-    }
-
-    const [plan] = planEncontrado;
-    const usuarioRef = db.collection("usuarios").doc(uid);
-    const usuarioDoc = await usuarioRef.get();
-
-    if (!usuarioDoc.exists) {
-      return res.status(200).json({
-        mensaje: "Usuario no encontrado",
-      });
-    }
-
-    const datosUsuario = usuarioDoc.data();
-
-    // Ignorar suscripciones antiguas
-    if (String(datosUsuario.suscripcionMP || "") !== String(dataId)) {
-      return res.status(200).json({
-        mensaje: "Suscripción anterior ignorada",
-      });
-    }
-
-    const estado = suscripcion.status;
-
-    if (estado === "authorized") {
-      await usuarioRef.update({
-        plan,
-        estadoPlan: "activo",
-        metodoPago: "mercado_pago",
-        actualizadoEn: FieldValue.serverTimestamp(),
-      });
-    } else if (estado === "pending") {
-      await usuarioRef.update({
-        plan,
-        estadoPlan: "pendiente",
-        metodoPago: "mercado_pago",
-        actualizadoEn: FieldValue.serverTimestamp(),
-      });
-    } else if (estado === "paused") {
-      await usuarioRef.update({
-        estadoPlan: "pausado",
-        actualizadoEn: FieldValue.serverTimestamp(),
-      });
-    } else if (estado === "cancelled") {
-      await usuarioRef.update({
-        plan: "bronze",
-        estadoPlan: "cancelado",
-        metodoPago: "mercado_pago",
-        actualizadoEn: FieldValue.serverTimestamp(),
-      });
-    }
-
-    return res.status(200).json({
-      mensaje: "Webhook procesado correctamente",
-    });
-
-  } catch (error) {
-    console.error("Error procesando webhook:", error);
-
-    return res.status(500).json({
-      error: "Error procesando notificación",
-    });
-  }
-});
-
-// ------------------------------------
+// --------------------------------------------------
 // INICIAR SERVIDOR
-// ------------------------------------
+// --------------------------------------------------
 
-const servidor = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor funcionando en http://localhost:${PORT}`);
-  console.log("Webhook disponible en /api/webhooks/mercadopago");
-});
-
-servidor.on("error", error => {
-  console.error("Error del servidor:", error);
+app.listen(PORT, () => {
+  console.log(`GoldenTicket backend funcionando en puerto ${PORT}`);
 });

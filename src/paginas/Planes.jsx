@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
 import Particulas from "../componentes/Particulas";
@@ -17,6 +17,27 @@ function Planes() {
 
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [planesDisponibles, setPlanesDisponibles] = useState(planes);
+
+  useEffect(() => {
+    async function cargarPlanes() {
+      try {
+        const resultado = await getDocs(collection(db, "planes"));
+        if (!resultado.empty) {
+          const guardados = new Map(resultado.docs.map((item) => [item.id, item.data()]));
+          // Se conservan siempre los tres planes originales y solo se pisan los campos editados.
+          setPlanesDisponibles(planes.map((plan) => ({
+            ...plan,
+            ...(guardados.get(plan.id) || {}),
+            id: plan.id,
+          })));
+        }
+      } catch (error) {
+        console.error("No se pudieron cargar los planes personalizados:", error);
+      }
+    }
+    cargarPlanes();
+  }, []);
 
   // Seleccionar un plan
   const seleccionarPlan = (plan) => {
@@ -73,7 +94,7 @@ function Planes() {
         </Encabezado>
 
         <section className="plans-container">
-          {planes.map((plan) => (
+          {planesDisponibles.map((plan) => (
             <TarjetaPlan
               key={plan.id}
               plan={plan}
