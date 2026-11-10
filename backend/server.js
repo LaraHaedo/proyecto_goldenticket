@@ -1099,7 +1099,7 @@ app.get("/api/entradas/estado/:compraId", verificarUsuario, async (req, res) => 
       const perfil = usuarioSnap.exists ? usuarioSnap.data() : {};
 
       return res.json({
-        estado: compra.estado || "pagada",
+        estado: "pagada",
         compraId,
         total: compra.total,
         subtotal: compra.subtotal,
