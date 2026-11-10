@@ -19,7 +19,7 @@ import {
 import "../estilos/compra.css";
 import { auth, db } from "../firebase/config";
 import { doc, onSnapshot } from "firebase/firestore";
-
+import { onAuthStateChanged } from "firebase/auth";
 const FILAS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const BLOQUES = [4, 7, 4];
 const TIEMPO_RESERVA = 5 * 60;
@@ -66,6 +66,7 @@ function Compra() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const qrRef = useRef(null);
+  const verificando = useRef(false);
   const [funcion, setFuncion] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [nivel, setNivel] = useState("bronce");
@@ -162,13 +163,36 @@ function Compra() {
         }),
       );
   }, [funcion, cantidad, butacas, paso]);
+  useEffect(() => {
+  let cancelarPerfil = () => {};
 
+  const cancelarAuth = onAuthStateChanged(auth, (user) => {
+    cancelarPerfil();
+    if (!user) return;
+
+    cancelarPerfil = onSnapshot(doc(db, "usuarios", user.uid), (snap) => {
+      if (!snap.exists()) return;
+      const datos = snap.data();
+      setUsuario((prev) => ({ ...prev, ...datos }));
+      setNivel(obtenerNivel(datos.compras || 0));
+      setNombre((n) => n || datos.nombre || "");
+      setEmail((e) => e || datos.email || "");
+    });
+  });
+
+  return () => {
+    cancelarAuth();
+    cancelarPerfil();
+  };
+}, []);
   useEffect(() => {
     const verificarPago = async () => {
       const estadoMP = searchParams.get("status") ||
         searchParams.get("collection_status");
 
       if (!estadoMP) return;
+      if (verificando.current) return;
+      verificando.current = true;
 
       const pendiente = JSON.parse(
         localStorage.getItem("pagoPendienteMP") || "null",
@@ -188,7 +212,7 @@ function Compra() {
 
       try {
         setProcesando(true);
-
+        await auth.authStateReady();
         const token = await auth.currentUser.getIdToken();
 
         // Esperamos hasta 30 segundos a que llegue la confirmación del webhook.
