@@ -1043,7 +1043,7 @@ app.post("/api/entradas/mercadopago", verificarUsuario, async (req, res) => {
           failure: `${FRONTEND_URL[0]}/compra?status=rejected`,
           pending: `${FRONTEND_URL[0]}/compra?status=pending`,
         },
-        auto_return: "approved",
+        
         notification_url: `${BACKEND_URL}/api/webhooks/mercadopago`,
       },
     });
