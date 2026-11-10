@@ -484,6 +484,138 @@ app.post("/api/webhooks/mercadopago", async (req, res) => {
       });
     }
 
+    // --------------------------------------------------
+// PROCESAR COMPRA DE ENTRADAS
+// --------------------------------------------------
+
+const entradaRef = db
+  .collection("preferencias_entradas")
+  .doc(preferenceId);
+
+const entradaDoc = await entradaRef.get();
+
+if (entradaDoc.exists) {
+  const datos = entradaDoc.data();
+
+  if (datos.uid !== uid) {
+    return res.status(400).json({ error: "Usuario incorrecto" });
+  }
+
+  if (
+    pago.currency_id !== "ARS" ||
+    Number(pago.transaction_amount) !== Number(datos.total)
+  ) {
+    return res.status(400).json({ error: "Importe incorrecto" });
+  }
+
+  const funcionRef = db.collection("horarios").doc(datos.funcionId);
+  const usuarioRef = db.collection("usuarios").doc(uid);
+  const compraRef = db.collection("compras_entradas").doc(datos.compraId);
+  const pagoEntradaRef = db.collection("pagos_entradas").doc(String(pago.id));
+
+  const resultado = await db.runTransaction(async (tx) => {
+    const pagoDoc = await tx.get(pagoEntradaRef);
+
+    if (pagoDoc.exists) return "ya_procesado";
+
+    const funcionDoc = await tx.get(funcionRef);
+    const usuarioDoc = await tx.get(usuarioRef);
+    const preferenciaActual = await tx.get(entradaRef);
+
+    if (!funcionDoc.exists || !usuarioDoc.exists || !preferenciaActual.exists) {
+      throw new Error("No se encontró la función, usuario o preferencia");
+    }
+
+    const funcion = funcionDoc.data();
+    const usuario = usuarioDoc.data();
+    const ocupadas = funcion.butacasOcupadas || [];
+
+    if (
+      funcion.formato !== "2D" ||
+      datos.butacas.some((b) => ocupadas.includes(b)) ||
+      Number(funcion.disponibles) < datos.cantidad
+    ) {
+      tx.update(entradaRef, {
+        estado: "conflicto_butacas",
+        pagoMP: String(pago.id),
+        actualizadoEn: FieldValue.serverTimestamp(),
+      });
+
+      tx.set(pagoEntradaRef, {
+        uid,
+        estado: "aprobado_sin_butacas",
+        preferenciaMP: preferenceId,
+        procesadoEn: FieldValue.serverTimestamp(),
+      });
+
+      return "conflicto";
+    }
+
+    const compras = Number(usuario.compras || 0) + 1;
+    const usadas = usuario.gratis?.mes === datos.mes
+      ? Number(usuario.gratis.cantidad || 0)
+      : 0;
+
+    tx.update(funcionRef, {
+      butacasOcupadas: [...ocupadas, ...datos.butacas],
+      disponibles: Number(funcion.disponibles) - datos.cantidad,
+    });
+
+    tx.update(usuarioRef, {
+      compras,
+      ...(datos.gratis > 0
+        ? { gratis: { mes: datos.mes, cantidad: usadas + datos.gratis } }
+        : {}),
+      actualizadoEn: FieldValue.serverTimestamp(),
+    });
+
+    tx.set(compraRef, {
+      uid,
+      pelicula: funcion.pelicula,
+      funcionId: datos.funcionId,
+      fecha: funcion.fecha,
+      hora: funcion.hora,
+      formato: "2D",
+      sala: "Sala única",
+      butacas: datos.butacas,
+      cantidad: datos.cantidad,
+      subtotal: datos.subtotal,
+      total: datos.total,
+      nivel: datos.nivel,
+      metodoPago: "Mercado Pago",
+      estado: "aprobada",
+      pagoMP: String(pago.id),
+      creadoEn: FieldValue.serverTimestamp(),
+    });
+
+    tx.set(pagoEntradaRef, {
+      uid,
+      compraId: datos.compraId,
+      preferenciaMP: preferenceId,
+      importe: Number(pago.transaction_amount),
+      moneda: "ARS",
+      estado: "aprobado",
+      procesadoEn: FieldValue.serverTimestamp(),
+    });
+
+    tx.update(entradaRef, {
+      estado: "pagada",
+      pagoMP: String(pago.id),
+      actualizadoEn: FieldValue.serverTimestamp(),
+    });
+
+    return "procesado";
+  });
+
+  console.log("Resultado del pago de entradas:", resultado);
+
+  return res.status(200).json({
+    recibido: true,
+    procesado: resultado === "procesado",
+    resultado,
+  });
+}
+
     // Buscamos la preferencia que GoldenTicket creó.
     const preferenciaRef = db
       .collection("preferencias_demo")
@@ -652,9 +784,355 @@ app.post(
 );
 
 // --------------------------------------------------
-// INICIAR SERVIDOR
+// COMPRAS DE ENTRADAS - TARJETA DE DEMOSTRACIÓN
 // --------------------------------------------------
 
+app.post("/api/entradas/demo", verificarUsuario, async (req, res) => {
+  try {
+    if (
+      process.env.NODE_ENV === "production" ||
+      process.env.ENABLE_DEMO_CHECKOUT !== "true"
+    ) {
+      return res.status(403).json({ error: "Demo no habilitada" });
+    }
+
+    const uid = req.usuario.uid;
+    const { funcionId, butacas } = req.body;
+
+    if (
+      !funcionId ||
+      !Array.isArray(butacas) ||
+      butacas.length < 1 ||
+      butacas.length > 10 ||
+      new Set(butacas).size !== butacas.length
+    ) {
+      return res.status(400).json({ error: "Datos de compra inválidos" });
+    }
+
+    const validas = butacas.every((b) => /^[A-H](?:[1-9]|1[0-5])$/.test(b));
+    if (!validas) {
+      return res.status(400).json({ error: "Butacas inválidas" });
+    }
+
+    const funcionRef = db.collection("horarios").doc(funcionId);
+    const usuarioRef = db.collection("usuarios").doc(uid);
+    const compraRef = db.collection("compras_entradas").doc();
+
+    const resultado = await db.runTransaction(async (tx) => {
+      const funcionDoc = await tx.get(funcionRef);
+      const usuarioDoc = await tx.get(usuarioRef);
+
+      if (!funcionDoc.exists || !usuarioDoc.exists) {
+        throw new Error("No se encontró la función o el usuario");
+      }
+
+      const funcion = funcionDoc.data();
+      const usuario = usuarioDoc.data();
+      const ocupadas = funcion.butacasOcupadas || [];
+
+      if (funcion.formato !== "2D" || Number(funcion.precio) !== 9000) {
+        throw new Error("La función no cumple con la configuración 2D");
+      }
+
+      if (butacas.some((b) => ocupadas.includes(b))) {
+        throw new Error("Una o más butacas ya están ocupadas");
+      }
+
+      if (Number(funcion.disponibles) < butacas.length) {
+        throw new Error("No hay suficientes butacas disponibles");
+      }
+
+      const plan = String(usuario.plan || "bronze").toLowerCase();
+      const nivel = {
+        bronze: "bronce",
+        silver: "plata",
+        golden: "dorado",
+        bronce: "bronce",
+        plata: "plata",
+        dorado: "dorado",
+      }[plan] || "bronce";
+
+      const cantidad = butacas.length;
+      const subtotal = cantidad * 9000;
+      const fecha = new Date(`${funcion.fecha}T12:00:00`);
+      const dia = fecha.toLocaleDateString("es-AR", { weekday: "long" })
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+      const lunesAMiercoles = ["lunes", "martes", "miercoles"].includes(dia);
+      const lunesAJueves = lunesAMiercoles || dia === "jueves";
+      const opciones = [subtotal];
+
+      if (lunesAMiercoles) opciones.push(Math.ceil(cantidad / 2) * 9000);
+
+      if ((nivel === "plata" || nivel === "dorado") && lunesAJueves) {
+        opciones.push((Math.floor(cantidad / 4) * 2 + cantidad % 4) * 9000);
+      }
+
+      if (nivel === "dorado") opciones.push(Math.round(subtotal * 0.8));
+
+      let total = Math.min(...opciones);
+      let gratis = 0;
+
+      const mes = funcion.fecha.slice(0, 7);
+      const usadas = usuario.gratis?.mes === mes
+        ? Number(usuario.gratis.cantidad || 0)
+        : 0;
+
+      if (nivel === "dorado") {
+        gratis = Math.min(Math.max(0, 2 - usadas), cantidad);
+        total -= Math.round(total / cantidad * gratis);
+      }
+
+      const nuevasOcupadas = [...ocupadas, ...butacas];
+      const compras = Number(usuario.compras || 0) + 1;
+
+      tx.update(funcionRef, {
+        butacasOcupadas: nuevasOcupadas,
+        disponibles: Number(funcion.disponibles) - cantidad,
+      });
+
+      tx.update(usuarioRef, {
+        compras,
+        ...(gratis > 0 ? { gratis: { mes, cantidad: usadas + gratis } } : {}),
+        actualizadoEn: FieldValue.serverTimestamp(),
+      });
+
+      tx.set(compraRef, {
+        uid,
+        pelicula: funcion.pelicula,
+        funcionId,
+        fecha: funcion.fecha,
+        hora: funcion.hora,
+        formato: "2D",
+        sala: "Sala única",
+        butacas,
+        cantidad,
+        subtotal,
+        total,
+        nivel,
+        metodoPago: "Tarjeta de demostración",
+        estado: "aprobada",
+        creadoEn: FieldValue.serverTimestamp(),
+      });
+
+      return { total, subtotal, nivel, compras };
+    });
+
+    return res.json({
+      correcto: true,
+      compraId: compraRef.id,
+      ...resultado,
+    });
+  } catch (error) {
+    console.error("Error en compra demo:", error);
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+// --------------------------------------------------
+// CHECKOUT MERCADO PAGO - ENTRADAS
+// --------------------------------------------------
+
+app.post("/api/entradas/mercadopago", verificarUsuario, async (req, res) => {
+  try {
+    if (
+      process.env.NODE_ENV === "production" ||
+      process.env.ENABLE_DEMO_CHECKOUT !== "true"
+    ) {
+      return res.status(403).json({ error: "Checkout de prueba no habilitado" });
+    }
+
+    if (!preference || !BACKEND_URL || !FRONTEND_URL.length) {
+      return res.status(500).json({ error: "Falta configurar Mercado Pago" });
+    }
+
+    const uid = req.usuario.uid;
+    const { funcionId, butacas } = req.body;
+
+    if (
+      !funcionId ||
+      !Array.isArray(butacas) ||
+      butacas.length < 1 ||
+      butacas.length > 10 ||
+      new Set(butacas).size !== butacas.length ||
+      !butacas.every((b) => /^[A-H](?:[1-9]|1[0-5])$/.test(b))
+    ) {
+      return res.status(400).json({ error: "Datos de compra inválidos" });
+    }
+
+    const funcionRef = db.collection("horarios").doc(funcionId);
+    const usuarioRef = db.collection("usuarios").doc(uid);
+
+    const [funcionDoc, usuarioDoc] = await Promise.all([
+      funcionRef.get(),
+      usuarioRef.get(),
+    ]);
+
+    if (!funcionDoc.exists || !usuarioDoc.exists) {
+      return res.status(404).json({ error: "Función o usuario inexistente" });
+    }
+
+    const funcion = funcionDoc.data();
+    const usuario = usuarioDoc.data();
+
+    if (funcion.formato !== "2D" || Number(funcion.precio) !== 9000) {
+      return res.status(400).json({ error: "La función no es válida" });
+    }
+
+    const ocupadas = funcion.butacasOcupadas || [];
+
+    if (
+      butacas.some((b) => ocupadas.includes(b)) ||
+      Number(funcion.disponibles) < butacas.length
+    ) {
+      return res.status(409).json({ error: "Una butaca ya no está disponible" });
+    }
+
+    const plan = String(usuario.plan || "bronze").toLowerCase();
+    const nivel = {
+      bronze: "bronce", silver: "plata", golden: "dorado",
+      bronce: "bronce", plata: "plata", dorado: "dorado",
+    }[plan] || "bronce";
+
+    const cantidad = butacas.length;
+    const subtotal = cantidad * 9000;
+    const fecha = new Date(`${funcion.fecha}T12:00:00`);
+    const dia = fecha.toLocaleDateString("es-AR", { weekday: "long" })
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    const lunesAMiercoles = ["lunes", "martes", "miercoles"].includes(dia);
+    const lunesAJueves = lunesAMiercoles || dia === "jueves";
+    const opciones = [subtotal];
+
+    if (lunesAMiercoles) opciones.push(Math.ceil(cantidad / 2) * 9000);
+
+    if ((nivel === "plata" || nivel === "dorado") && lunesAJueves) {
+      opciones.push((Math.floor(cantidad / 4) * 2 + cantidad % 4) * 9000);
+    }
+
+    if (nivel === "dorado") opciones.push(Math.round(subtotal * 0.8));
+
+    let total = Math.min(...opciones);
+    const mes = funcion.fecha.slice(0, 7);
+    const usadas = usuario.gratis?.mes === mes ? Number(usuario.gratis.cantidad || 0) : 0;
+    const gratis = nivel === "dorado" ? Math.min(Math.max(0, 2 - usadas), cantidad) : 0;
+
+    if (gratis > 0) total -= Math.round(total / cantidad * gratis);
+
+    const compraId = db.collection("compras_entradas").doc().id;
+
+    const resultado = await preference.create({
+      body: {
+        items: [{
+          id: compraId,
+          title: `GoldenTicket - ${funcion.pelicula}`,
+          description: `${cantidad} entrada(s) 2D - Butacas ${butacas.join(", ")}`,
+          quantity: 1,
+          currency_id: "ARS",
+          unit_price: total,
+        }],
+        external_reference: uid,
+        metadata: {
+          tipo: "entradas",
+          uid,
+          compraId,
+          funcionId,
+        },
+        back_urls: {
+          success: `${FRONTEND_URL[0]}/compra?status=approved`,
+          failure: `${FRONTEND_URL[0]}/compra?status=rejected`,
+          pending: `${FRONTEND_URL[0]}/compra?status=pending`,
+        },
+        auto_return: "approved",
+        notification_url: `${BACKEND_URL}/api/webhooks/mercadopago`,
+      },
+    });
+
+    if (!resultado.sandbox_init_point) {
+      return res.status(500).json({ error: "Mercado Pago no devolvió el checkout de prueba" });
+    }
+
+    await db.collection("preferencias_entradas").doc(String(resultado.id)).set({
+      uid,
+      compraId,
+      funcionId,
+      butacas,
+      cantidad,
+      subtotal,
+      total,
+      nivel,
+      gratis,
+      mes,
+      preferenciaMP: String(resultado.id),
+      estado: "creada",
+      creadoEn: FieldValue.serverTimestamp(),
+    });
+
+    return res.json({ correcto: true, url: resultado.sandbox_init_point , compraId });
+  } catch (error) {
+    console.error("Error creando checkout de entradas:", error);
+    return res.status(500).json({ error: "No se pudo iniciar el pago" });
+  }
+});
+
+app.get("/api/entradas/estado/:compraId", verificarUsuario, async (req, res) => {
+  try {
+    const { compraId } = req.params;
+
+    const compraRef = db.collection("compras_entradas").doc(compraId);
+    const compraSnap = await compraRef.get();
+
+    if (compraSnap.exists) {
+      const compra = compraSnap.data();
+
+      if (compra.uid !== req.usuario.uid) {
+        return res.status(403).json({
+          error: "No tenés permiso para consultar esta compra."
+        });
+      }
+
+      const usuarioSnap = await db
+        .collection("usuarios")
+        .doc(req.usuario.uid)
+        .get();
+
+      const perfil = usuarioSnap.exists ? usuarioSnap.data() : {};
+
+      return res.json({
+        estado: compra.estado || "pagada",
+        compraId,
+        total: compra.total,
+        subtotal: compra.subtotal,
+        compras: perfil.compras || 0,
+      });
+    }
+
+    const preferencias = await db
+      .collection("preferencias_entradas")
+      .where("compraId", "==", compraId)
+      .limit(1)
+      .get();
+
+    if (preferencias.empty) {
+      return res.status(404).json({ error: "No se encontró la compra." });
+    }
+
+    const preferencia = preferencias.docs[0].data();
+
+    if (preferencia.uid !== req.usuario.uid) {
+      return res.status(403).json({ error: "No tenés permiso para consultar esta compra." });
+    }
+
+    return res.json({ estado: preferencia.estado || "pendiente", compraId });
+  } catch (error) {
+    console.error("Error consultando compra:", error);
+    return res.status(500).json({ error: "No se pudo consultar el estado de la compra." });
+  }
+});
+
+// --------------------------------------------------
+// INICIAR SERVIDOR
+// --------------------------------------------------
 app.listen(PORT, () => {
   console.log(`GoldenTicket backend funcionando en puerto ${PORT}`);
 });
