@@ -17,6 +17,8 @@ import {
   claveMes,
 } from "../utils/descuentos";
 import "../estilos/compra.css";
+import { auth, db } from "../firebase/config";
+import { doc, onSnapshot } from "firebase/firestore";
 
 const FILAS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const BLOQUES = [4, 7, 4];
@@ -28,30 +30,6 @@ function formatearPrecio(valor) {
 }
 function claveFuncion(funcion) {
   return [funcion.dia, funcion.fecha, funcion.hora, funcion.formato].join("|");
-}
-function generadorAleatorio(texto) {
-  let semilla = 0;
-  for (let i = 0; i < texto.length; i++)
-    semilla = (semilla * 31 + texto.charCodeAt(i)) >>> 0;
-  return () => {
-    semilla = (semilla + 0x6d2b79f5) >>> 0;
-    let t = semilla;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function obtenerButacasOcupadas(funcion) {
-  const ocupadas = new Set();
-  const azar = generadorAleatorio(claveFuncion(funcion));
-  const columnas = BLOQUES.reduce((a, b) => a + b, 0);
-  FILAS.forEach((fila) => {
-    for (let col = 1; col <= columnas; col++)
-      if (azar() < 0.22) ocupadas.add(fila + col);
-  });
-  const compradas = JSON.parse(localStorage.getItem("butacasOcupadas") || "{}");
-  (compradas[claveFuncion(funcion)] || []).forEach((b) => ocupadas.add(b));
-  return ocupadas;
 }
 function numeroTarjetaValido(numero) {
   if (!/^\d{13,19}$/.test(numero)) return false;
@@ -108,6 +86,21 @@ function Compra() {
   const [tarjetaCvv, setTarjetaCvv] = useState("");
   const [compraFinal, setCompraFinal] = useState(null);
   const [nivelNuevo, setNivelNuevo] = useState(null);
+  const [ocupadas, setOcupadas] = useState(new Set());
+
+  useEffect(() => {
+    if (!funcion?.funcionId) return;
+
+    const referencia = doc(db, "horarios", funcion.funcionId);
+
+    const cancelar = onSnapshot(referencia, (snapshot) => {
+      if (snapshot.exists()) {
+        setOcupadas(new Set(snapshot.data().butacasOcupadas || []));
+      }
+    });
+
+    return () => cancelar();
+  }, [funcion]);
 
   useEffect(() => {
     if (!estaLogueado()) {
@@ -129,11 +122,7 @@ function Compra() {
     );
     if (guardada && guardada.clave === claveFuncion(f)) {
       setCantidad(guardada.cantidad || 1);
-      setButacas(
-        (guardada.butacas || []).filter(
-          (b) => !obtenerButacasOcupadas(f).has(b),
-        ),
-      );
+      setButacas(guardada.butacas || []);
       setPaso(Math.min(guardada.paso || 1, 3));
     }
     setNombre(u?.nombre || localStorage.getItem("usuarioActual") || "");
@@ -175,27 +164,75 @@ function Compra() {
   }, [funcion, cantidad, butacas, paso]);
 
   useEffect(() => {
-    const estado = params.get("status") || params.get("collection_status");
-    const pendiente = JSON.parse(
-      localStorage.getItem("pagoPendienteMP") || "null",
-    );
-    if (!funcion || !estado || !pendiente || compraFinal) return;
-    localStorage.removeItem("pagoPendienteMP");
-    if (estado !== "approved") {
-      setPaso(3);
-      setNombre(pendiente.nombre);
-      setEmail(pendiente.email);
-      setErrorPago(
-        "El pago con Mercado Pago no se completó. Podés intentarlo de nuevo.",
+    const verificarPago = async () => {
+      const estadoMP = searchParams.get("status") ||
+        searchParams.get("collection_status");
+
+      if (!estadoMP) return;
+
+      const pendiente = JSON.parse(
+        localStorage.getItem("pagoPendienteMP") || "null",
       );
-      return;
-    }
-    setCantidad(pendiente.cantidad);
-    setButacas(pendiente.butacas);
-    setNombre(pendiente.nombre);
-    setEmail(pendiente.email);
-    finalizarCompra("Mercado Pago", pendiente);
-  }, [funcion, params]);
+
+      if (!pendiente?.compraId) {
+        setErrorPago("No se encontró la información de la compra.");
+        setPaso(3);
+        return;
+      }
+
+      if (estadoMP !== "approved") {
+        setErrorPago("El pago no fue aprobado. No se ocuparon las butacas.");
+        setPaso(3);
+        return;
+      }
+
+      try {
+        setProcesando(true);
+
+        const token = await auth.currentUser.getIdToken();
+
+        // Esperamos hasta 30 segundos a que llegue la confirmación del webhook.
+        for (let intento = 0; intento < 15; intento++) {
+          const respuesta = await fetch(
+            `http://localhost:3000/api/entradas/estado/${pendiente.compraId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          const data = await respuesta.json();
+
+          if (data.estado === "pagada") {
+            await finalizarCompra("Mercado Pago", pendiente, data);
+            return;
+          }
+
+          if (data.estado === "conflicto_butacas") {
+            throw new Error(
+              "El pago fue aprobado, pero las butacas ya no estaban disponibles. Contactá al administrador.",
+            );
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+
+        setErrorPago(
+          "El pago todavía está pendiente de confirmación. No vuelvas a pagar; esperá unos instantes y consultá el estado.",
+        );
+        setPaso(3);
+      } catch (error) {
+        console.error("Error verificando el pago:", error);
+        setErrorPago(error.message || "No se pudo verificar el pago.");
+        setPaso(3);
+      } finally {
+        setProcesando(false);
+      }
+    };
+
+    verificarPago();
+  }, [searchParams]);
 
   const calculo = useMemo(
     () =>
@@ -209,10 +246,6 @@ function Compra() {
           )
         : null,
     [funcion, cantidad, nivel, usuario],
-  );
-  const ocupadas = useMemo(
-    () => (funcion ? obtenerButacasOcupadas(funcion) : new Set()),
-    [funcion, paso, compraFinal],
   );
 
   function guardarEstadoCompra(
@@ -247,26 +280,27 @@ function Compra() {
     guardarEstadoCompra(nueva, nuevas, paso);
   }
   function alternarButaca(id) {
+    if (ocupadas.has(id)) return;
+
     setErrorButacas("");
+
     let nuevas = [...butacas];
-    if (nuevas.includes(id)) nuevas = nuevas.filter((b) => b !== id);
-    else {
-      if (nuevas.length >= cantidad) {
-        if (cantidad === 1) nuevas = [];
-        else {
-          setErrorButacas(
-            `Ya elegiste las ${cantidad} butacas. Tocá una elegida para sacarla o volvé y cambiá la cantidad de entradas.`,
-          );
-          return;
-        }
-      }
+
+    if (nuevas.includes(id)) {
+      nuevas = nuevas.filter((b) => b !== id);
+    } else if (nuevas.length >= cantidad) {
+      nuevas.shift();
+      nuevas.push(id);
+    } else {
       nuevas.push(id);
     }
+
     nuevas.sort((a, b) =>
       a[0] === b[0]
-        ? parseInt(a.slice(1)) - parseInt(b.slice(1))
+        ? Number(a.slice(1)) - Number(b.slice(1))
         : a.localeCompare(b),
     );
+
     setButacas(nuevas);
     guardarEstadoCompra(cantidad, nuevas, paso);
   }
@@ -306,44 +340,95 @@ function Compra() {
     setErrorPago("");
     return true;
   }
-  function pagar() {
+  async function pagar() {
     if (!validarPago()) return;
     if (metodo === "mp") {
-      pagarConMercadoPago();
+      await pagarConMercadoPago();
       return;
     }
-    setProcesando(true);
-    setTimeout(() => {
+    await pagarConTarjetaDemo();
+  }
+  async function pagarConTarjetaDemo() {
+    try {
+      setProcesando(true);
+      setErrorPago("");
+
+      const token = await auth.currentUser.getIdToken();
+
+      const respuesta = await fetch("http://localhost:3000/api/entradas/demo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          funcionId: funcion.funcionId,
+          butacas,
+        }),
+      });
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(data.error || "No se pudo completar la compra.");
+      }
+
+      await finalizarCompra(metodo, null, data);
+    } catch (error) {
+      console.error("Error al comprar:", error);
+      setErrorPago(error.message || "Ocurrió un error al procesar el pago.");
+    } finally {
       setProcesando(false);
-      finalizarCompra(
-        metodo === "credito" ? "Tarjeta de crédito" : "Tarjeta de débito",
-      );
-    }, 2200);
-  }
-  function pagarConMercadoPago() {
-    localStorage.setItem(
-      "pagoPendienteMP",
-      JSON.stringify({
-        funcion,
-        cantidad,
-        butacas,
-        nombre: nombre.trim(),
-        email: email.trim(),
-      }),
-    );
-    if (MERCADO_PAGO.linkDePago) {
-      window.location.href = MERCADO_PAGO.linkDePago;
-      return;
     }
-    if (
-      window.confirm(
-        "MODO DEMO: todavía no se configuró el link de Mercado Pago.\n\n¿Querés simular que el pago fue aprobado?",
-      )
-    )
-      navigate("/compra?status=approved");
-    else localStorage.removeItem("pagoPendienteMP");
   }
-  function finalizarCompra(metodoTexto, pendiente = null) {
+  async function pagarConMercadoPago() {
+    try {
+      setProcesando(true);
+      setErrorPago("");
+
+      const token = await auth.currentUser.getIdToken();
+
+      const respuesta = await fetch(
+        "http://localhost:3000/api/entradas/mercadopago",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            funcionId: funcion.funcionId,
+            butacas,
+          }),
+        },
+      );
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(data.error || "No se pudo iniciar el pago.");
+      }
+
+      localStorage.setItem(
+        "pagoPendienteMP",
+        JSON.stringify({
+          compraId: data.compraId,
+          funcion,
+          cantidad,
+          butacas,
+          nombre,
+          email,
+        }),
+      );
+
+      window.location.assign(data.url);
+    } catch (error) {
+      console.error("Error iniciando Mercado Pago:", error);
+      setErrorPago(error.message || "No se pudo conectar con Mercado Pago.");
+      setProcesando(false);
+    }
+  }
+  async function finalizarCompra(metodoTexto, pendiente = null, resultadoServidor = null) {
     const c = pendiente?.funcion
       ? calcularPrecio(
           PRECIOS[pendiente.funcion.formato],
@@ -353,8 +438,10 @@ function Compra() {
           entradasGratisDisponibles(nivel, usuario?.gratis),
         )
       : calculo;
+
     const compra = {
       codigo: generarCodigo(),
+      compraId: resultadoServidor?.compraId || "",
       pelicula: funcion.pelicula,
       dia: funcion.dia,
       fecha: funcion.fecha,
@@ -362,45 +449,47 @@ function Compra() {
       formato: funcion.formato,
       cantidad: pendiente?.cantidad || cantidad,
       butacas: (pendiente?.butacas || butacas).slice(),
-      subtotal: c.subtotal,
+      subtotal: resultadoServidor?.subtotal ?? c.subtotal,
       descuento: c.promo?.nombre || "",
       entradasGratis: c.gratis?.cantidad || 0,
-      total: c.total,
+      total: resultadoServidor?.total ?? c.total,
       metodoPago: metodoTexto,
       nombre: nombre.trim(),
       email: email.trim(),
-      nivel,
+      nivel: resultadoServidor?.nivel || nivel,
       fechaCompra: new Date().toISOString(),
     };
-    const clave = claveFuncion(funcion);
-    const ocup = JSON.parse(localStorage.getItem("butacasOcupadas") || "{}");
-    ocup[clave] = (ocup[clave] || []).concat(compra.butacas);
-    localStorage.setItem("butacasOcupadas", JSON.stringify(ocup));
-    if (usuario) {
-      const antes = nivel;
-      const actualizado = { ...usuario, compras: (usuario.compras || 0) + 1 };
-      if (c.gratis) {
-        const mes = claveMes();
-        const usadas =
-          actualizado.gratis?.mes === mes ? actualizado.gratis.cantidad : 0;
-        actualizado.gratis = { mes, cantidad: usadas + c.gratis.cantidad };
-      }
-      guardarUsuario(actualizado);
+
+    // Actualizamos el nivel y las compras en pantalla.
+    // El backend ya se encargó de guardar los datos en Firebase.
+    if (usuario && resultadoServidor?.compras !== undefined) {
+      const actualizado = {
+        ...usuario,
+        compras: resultadoServidor.compras,
+      };
+
       setUsuario(actualizado);
-      const nuevo = obtenerNivel(actualizado.compras);
+
+      const nuevo = obtenerNivel(resultadoServidor.compras);
+      setNivelNuevo(nuevo !== nivel ? nuevo : null);
       setNivel(nuevo);
-      setNivelNuevo(nuevo !== antes ? nuevo : null);
     }
+
+    // Guardamos el comprobante para mostrarlo en esta sesión.
     const historial = JSON.parse(
       localStorage.getItem("comprasRealizadas") || "[]",
     );
+
     historial.push(compra);
+
     localStorage.setItem("comprasRealizadas", JSON.stringify(historial));
     localStorage.setItem("ultimaCompra", JSON.stringify(compra));
+
     localStorage.removeItem("compraEnCurso");
     localStorage.removeItem("reservaVence");
     localStorage.removeItem("funcionSeleccionada");
     localStorage.removeItem("pagoPendienteMP");
+
     setCompraFinal(compra);
     setPaso(4);
     window.scrollTo(0, 0);
