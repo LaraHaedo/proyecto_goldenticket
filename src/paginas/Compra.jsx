@@ -5,7 +5,7 @@ import {
   estaLogueado,
   guardarPaginaRetorno,
   obtenerUsuario,
-  guardarUsuario,
+  
 } from "../utils/auth";
 import {
   calcularPrecio,
@@ -23,7 +23,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 const FILAS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 const BLOQUES = [4, 7, 4];
 const TIEMPO_RESERVA = 5 * 60;
-const MERCADO_PAGO = { linkDePago: "" };
+
 
 function formatearPrecio(valor) {
   return "$" + Math.round(valor).toLocaleString("es-AR");
@@ -64,7 +64,7 @@ function generarCodigo() {
 
 function Compra() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const qrRef = useRef(null);
   const [funcion, setFuncion] = useState(null);
   const [usuario, setUsuario] = useState(null);
