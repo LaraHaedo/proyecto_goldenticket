@@ -429,6 +429,8 @@ function Compra() {
     }
   }
   async function finalizarCompra(metodoTexto, pendiente = null, resultadoServidor = null) {
+      const f = pendiente?.funcion || funcion;
+  if (!f) return;
     const c = pendiente?.funcion
       ? calcularPrecio(
           PRECIOS[pendiente.funcion.formato],
@@ -442,11 +444,11 @@ function Compra() {
     const compra = {
       codigo: generarCodigo(),
       compraId: resultadoServidor?.compraId || "",
-      pelicula: funcion.pelicula,
-      dia: funcion.dia,
-      fecha: funcion.fecha,
-      hora: funcion.hora,
-      formato: funcion.formato,
+      pelicula: f.pelicula,
+      dia: f.dia,
+      fecha: f.fecha,
+      hora: f.hora,
+      formato: f.formato,
       cantidad: pendiente?.cantidad || cantidad,
       butacas: (pendiente?.butacas || butacas).slice(),
       subtotal: resultadoServidor?.subtotal ?? c.subtotal,
@@ -454,8 +456,8 @@ function Compra() {
       entradasGratis: c.gratis?.cantidad || 0,
       total: resultadoServidor?.total ?? c.total,
       metodoPago: metodoTexto,
-      nombre: nombre.trim(),
-      email: email.trim(),
+      nombre: (pendiente?.nombre || nombre).trim(),
+      email: (pendiente?.email || email).trim(),
       nivel: resultadoServidor?.nivel || nivel,
       fechaCompra: new Date().toISOString(),
     };
