@@ -16,7 +16,7 @@ const FRONTEND_URL = (process.env.FRONTEND_URL || "")
   .map((url) => url.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
-const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/+$/, "");
+const BACKEND_URL = (process.env.BACKEND_URL || "").trim().replace(/\/+$/, "");
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET;
@@ -75,7 +75,12 @@ app.use(
       // Permite herramientas sin origen, como Postman.
       if (!origin) return callback(null, true);
 
-      if (FRONTEND_URL.includes(origin.replace(/\/+$/, ""))) {
+      const origenNormalizado = origin.replace(/\/+$/, "");
+      const esFrontendLocal =
+        process.env.NODE_ENV !== "production" &&
+        ["http://localhost:4040", "http://127.0.0.1:4040"].includes(origenNormalizado);
+
+      if (FRONTEND_URL.includes(origenNormalizado) || esFrontendLocal) {
         return callback(null, true);
       }
 
@@ -355,9 +360,9 @@ app.post("/api/suscripciones", verificarUsuario, async (req, res) => {
         },
 
         back_urls: {
-          success: `${FRONTEND_URL[0]}/planes?estado=aprobado`,
-          failure: `${FRONTEND_URL[0]}/planes?estado=rechazado`,
-          pending: `${FRONTEND_URL[0]}/planes?estado=pendiente`,
+          success: `${FRONTEND_URL[0]}/planes?estado=approved`,
+          failure: `${FRONTEND_URL[0]}/planes?estado=rejected`,
+          pending: `${FRONTEND_URL[0]}/planes?estado=pending`,
         },
 
         auto_return: "approved",
@@ -411,6 +416,28 @@ app.post("/api/suscripciones", verificarUsuario, async (req, res) => {
       error: "No se pudo crear el pago de prueba",
       detalle: error.message,
     });
+  }
+});
+
+// --------------------------------------------------
+// CONSULTAR ESTADO DE UNA SUSCRIPCIÓN DE PRUEBA
+// --------------------------------------------------
+app.get("/api/suscripciones/estado/:preferenciaId", verificarUsuario, async (req, res) => {
+  try {
+    const referencia = await db.collection("preferencias_demo").doc(req.params.preferenciaId).get();
+    if (!referencia.exists) {
+      return res.status(404).json({ error: "No se encontró el pago del plan." });
+    }
+
+    const datos = referencia.data();
+    if (datos.uid !== req.usuario.uid) {
+      return res.status(403).json({ error: "No tenés permiso para consultar este pago." });
+    }
+
+    return res.json({ estado: datos.estado || "pendiente", plan: datos.plan });
+  } catch (error) {
+    console.error("Error consultando estado del plan:", error);
+    return res.status(500).json({ error: "No se pudo consultar el estado del plan." });
   }
 });
 
@@ -1043,7 +1070,7 @@ app.post("/api/entradas/mercadopago", verificarUsuario, async (req, res) => {
           failure: `${FRONTEND_URL[0]}/compra?status=rejected`,
           pending: `${FRONTEND_URL[0]}/compra?status=pending`,
         },
-        
+        auto_return: "approved",
         notification_url: `${BACKEND_URL}/api/webhooks/mercadopago`,
       },
     });

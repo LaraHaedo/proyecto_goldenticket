@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { doc, updateDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
@@ -14,10 +14,67 @@ import "../estilos/planes.css";
 
 function Planes() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mensajePago, setMensajePago] = useState("");
 
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [planesDisponibles, setPlanesDisponibles] = useState(planes);
+
+  useEffect(() => {
+    const estado = searchParams.get("estado");
+    const preferenciaId = searchParams.get("preference_id");
+
+    if (estado === "rejected") {
+      setMensajePago("El pago no fue aprobado. Podés intentarlo nuevamente.");
+      setSearchParams({}, { replace: true });
+      return;
+    }
+    if (estado === "pending") {
+      setMensajePago("Tu pago está pendiente de confirmación.");
+      setSearchParams({}, { replace: true });
+      return;
+    }
+    if (estado !== "approved" || !preferenciaId) return;
+
+    let cancelado = false;
+    let intentos = 0;
+
+    const verificar = async () => {
+      try {
+        await auth.authStateReady();
+        const usuario = auth.currentUser;
+        if (!usuario) throw new Error("Iniciá sesión para verificar tu pago.");
+        const token = await usuario.getIdToken();
+        const respuesta = await fetch(`/api/suscripciones/estado/${encodeURIComponent(preferenciaId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudo verificar el pago.");
+
+        if (datos.estado === "pagada") {
+          if (!cancelado) setMensajePago(`¡Tu plan ${String(datos.plan).toUpperCase()} fue activado correctamente!`);
+          setSearchParams({}, { replace: true });
+          return;
+        }
+      } catch (error) {
+        if (!cancelado) setMensajePago(error.message || "No se pudo verificar el pago.");
+        setSearchParams({}, { replace: true });
+        return;
+      }
+
+      intentos += 1;
+      if (intentos >= 15) {
+        if (!cancelado) setMensajePago("Mercado Pago recibió tu regreso, pero la confirmación todavía está pendiente. Actualizá la página en unos segundos.");
+        setSearchParams({}, { replace: true });
+        return;
+      }
+      if (!cancelado) window.setTimeout(verificar, 2000);
+    };
+
+    verificar();
+    return () => { cancelado = true; };
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     async function cargarPlanes() {
@@ -85,6 +142,7 @@ function Planes() {
       />
 
       <main className="plans-section">
+        {mensajePago && <p className="modal-error" role="status">{mensajePago}</p>}
         <div className="film-strip film-left"></div>
         <div className="film-strip film-right"></div>
 
