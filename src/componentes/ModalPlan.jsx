@@ -30,62 +30,70 @@ function ModalPlan({ plan, abierto, onCerrar }) {
 
   const esGratis = plan.id === "bronze";
 
+  // Obtener el token de Firebase
   const obtenerToken = async () => {
     const usuario = auth.currentUser;
 
     if (!usuario) {
-      throw new Error("Tenés que iniciar sesión para contratar un plan.");
+      throw new Error(
+        "Tenés que iniciar sesión para contratar un plan."
+      );
     }
 
     return await usuario.getIdToken();
   };
 
+  // Leer la respuesta sin provocar errores si viene vacía
+  const leerRespuesta = async (respuesta) => {
+    const texto = await respuesta.text();
+
+    let datos = {};
+
+    if (texto.trim()) {
+      try {
+        datos = JSON.parse(texto);
+      } catch {
+        throw new Error(
+          "El servidor devolvió una respuesta inválida."
+        );
+      }
+    }
+
+    if (!respuesta.ok) {
+      throw new Error(
+        datos.error ||
+        datos.message ||
+        `Error del servidor (${respuesta.status}).`
+      );
+    }
+
+    return datos;
+  };
+
+  // Activación demostrativa con tarjeta ficticia: solo valida que se completen los campos.
   const activarTarjetaVisual = async () => {
-    const numeroLimpio = numero.replace(/\s/g, "");
+    const numeroLimpio = numero.replace(/\D/g, "");
+    const vencimientoLimpio = vencimiento.trim();
 
     if (
       !titular.trim() ||
-      numeroLimpio.length < 13 ||
-      !/^\d+$/.test(numeroLimpio) ||
-      !/^\d{2}\/\d{2}$/.test(vencimiento) ||
-      !/^\d{3,4}$/.test(cvv)
+      !numeroLimpio ||
+      !vencimientoLimpio ||
+      !cvv.trim()
     ) {
-      throw new Error("Completá correctamente todos los campos.");
+      throw new Error("Completá todos los campos de la tarjeta.");
     }
 
-    // Los datos de tarjeta solo se usan para validar el formulario.
-    // Nunca se envían al backend ni se guardan.
-
-    const token = await obtenerToken();
-
-    const respuesta = await fetch(
-      "http://localhost:3000/api/suscripciones/demo",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          plan: plan.id,
-        }),
-      }
-    );
-
-    const datos = await respuesta.json();
-
-    if (!respuesta.ok) {
-      throw new Error(datos.error || "No se pudo activar el plan.");
-    }
-
+    // No se envían datos a ningún servidor ni se realiza un cobro.
     setConfirmado(true);
   };
 
+  // Crear suscripción en Mercado Pago
   const iniciarMercadoPago = async () => {
     const token = await obtenerToken();
 
     const respuesta = await fetch(
-      "http://localhost:3000/api/suscripciones",
+      "/api/suscripciones",
       {
         method: "POST",
         headers: {
@@ -98,19 +106,19 @@ function ModalPlan({ plan, abierto, onCerrar }) {
       }
     );
 
-    const datos = await respuesta.json();
-
-    if (!respuesta.ok) {
-      throw new Error(datos.error || "No se pudo crear la suscripción.");
-    }
+    const datos = await leerRespuesta(respuesta);
 
     if (!datos.url) {
-      throw new Error("Mercado Pago no devolvió el enlace de pago.");
+      throw new Error(
+        "Mercado Pago no devolvió el enlace de pago."
+      );
     }
 
+    // Redirigir al checkout de Mercado Pago
     window.location.assign(datos.url);
   };
 
+  // Procesar la selección del usuario
   const procesarPago = async () => {
     setError("");
 
@@ -127,10 +135,16 @@ function ModalPlan({ plan, abierto, onCerrar }) {
       } else {
         await iniciarMercadoPago();
       }
-
     } catch (err) {
-      console.error("Error procesando suscripción:", err);
-      setError(err.message || "No se pudo procesar la solicitud.");
+      console.error(
+        "Error procesando suscripción:",
+        err
+      );
+
+      setError(
+        err.message || "No se pudo procesar la solicitud."
+      );
+    } finally {
       setProcesando(false);
     }
   };
@@ -146,17 +160,22 @@ function ModalPlan({ plan, abierto, onCerrar }) {
             <h2>¡PLAN ACTIVADO!</h2>
 
             <p>
-              Tu plan {plan.id.toUpperCase()} ya está activo en GoldenTicket.
+              Tu plan {plan.id.toUpperCase()} ya está activo
+              en GoldenTicket.
             </p>
 
             {metodo === "tarjeta" && (
               <p>
-                Activación demostrativa: no se realizó ningún cobro.
+                Activación demostrativa:
+                no se realizó ningún cobro.
               </p>
             )}
 
             <div className="modal-actions">
-              <button className="modal-close-btn" onClick={onCerrar}>
+              <button
+                className="modal-close-btn"
+                onClick={onCerrar}
+              >
                 CERRAR
               </button>
             </div>
@@ -168,12 +187,14 @@ function ModalPlan({ plan, abierto, onCerrar }) {
             </div>
 
             <h2>{plan.modal.titulo}</h2>
+
             <p>{plan.modal.texto}</p>
 
             {esGratis ? (
               <div className="bronze-form-container">
                 <p className="payment-title">
-                  El plan Bronze es gratuito y está incluido en tu cuenta.
+                  El plan Bronze es gratuito
+                  y está incluido en tu cuenta.
                 </p>
               </div>
             ) : (
@@ -197,7 +218,9 @@ function ModalPlan({ plan, abierto, onCerrar }) {
                   <div className="payment-methods">
                     <button
                       type="button"
-                      className={`payment-method ${metodo === "mercadopago" ? "selected" : ""}`}
+                      className={`payment-method ${
+                        metodo === "mercadopago" ? "selected" : ""
+                      }`}
                       onClick={() => setMetodo("mercadopago")}
                     >
                       💙 Mercado Pago
@@ -205,7 +228,9 @@ function ModalPlan({ plan, abierto, onCerrar }) {
 
                     <button
                       type="button"
-                      className={`payment-method ${metodo === "tarjeta" ? "selected" : ""}`}
+                      className={`payment-method ${
+                        metodo === "tarjeta" ? "selected" : ""
+                      }`}
                       onClick={() => setMetodo("tarjeta")}
                     >
                       💳 Tarjeta
@@ -220,20 +245,28 @@ function ModalPlan({ plan, abierto, onCerrar }) {
                     </p>
 
                     <p>
-                      Formulario demostrativo: no procesa pagos reales.
+                      Completá los datos de una tarjeta ficticia para simular la activación. No se realiza ningún cobro.
                     </p>
 
-                    <label htmlFor="titular">Nombre del titular</label>
+                    <label htmlFor="titular">
+                      Nombre del titular
+                    </label>
+
                     <input
                       id="titular"
                       type="text"
                       autoComplete="off"
                       placeholder="Nombre como aparece en la tarjeta"
                       value={titular}
-                      onChange={(e) => setTitular(e.target.value)}
+                      onChange={(e) =>
+                        setTitular(e.target.value)
+                      }
                     />
 
-                    <label htmlFor="numero">Número de tarjeta</label>
+                    <label htmlFor="numero">
+                      Número de tarjeta (de prueba)
+                    </label>
+
                     <input
                       id="numero"
                       type="text"
@@ -254,6 +287,7 @@ function ModalPlan({ plan, abierto, onCerrar }) {
                         <label htmlFor="vencimiento">
                           Vencimiento
                         </label>
+
                         <input
                           id="vencimiento"
                           type="text"
@@ -280,6 +314,7 @@ function ModalPlan({ plan, abierto, onCerrar }) {
 
                       <div>
                         <label htmlFor="cvv">CVV</label>
+
                         <input
                           id="cvv"
                           type="password"
@@ -289,22 +324,25 @@ function ModalPlan({ plan, abierto, onCerrar }) {
                           maxLength={4}
                           value={cvv}
                           onChange={(e) =>
-                            setCvv(e.target.value.replace(/\D/g, ""))
+                            setCvv(
+                              e.target.value.replace(/\D/g, "")
+                            )
                           }
                         />
                       </div>
                     </div>
 
                     <p className="demo-notice">
-                      Este formulario es demostrativo. No ingreses datos
-                      de una tarjeta real.
+                      Este formulario es demostrativo.
+                      No ingreses datos de una tarjeta real.
                     </p>
                   </div>
                 ) : (
                   <div className="payment-options">
                     <p>
-                      Vas a continuar al checkout seguro de Mercado Pago
-                      para autorizar tu suscripción mensual.
+                      Vas a continuar al checkout seguro
+                      de Mercado Pago para autorizar
+                      tu suscripción mensual.
                     </p>
                   </div>
                 )}
@@ -312,7 +350,9 @@ function ModalPlan({ plan, abierto, onCerrar }) {
             )}
 
             {error && (
-              <p className="modal-error">{error}</p>
+              <p className="modal-error">
+                {error}
+              </p>
             )}
 
             <div className="modal-actions">

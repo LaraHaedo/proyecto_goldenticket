@@ -31,29 +31,6 @@ function formatearPrecio(valor) {
 function claveFuncion(funcion) {
   return [funcion.dia, funcion.fecha, funcion.hora, funcion.formato].join("|");
 }
-function numeroTarjetaValido(numero) {
-  if (!/^\d{13,19}$/.test(numero)) return false;
-  let suma = 0,
-    alternar = false;
-  for (let i = numero.length - 1; i >= 0; i--) {
-    let d = parseInt(numero[i], 10);
-    if (alternar) {
-      d *= 2;
-      if (d > 9) d -= 9;
-    }
-    suma += d;
-    alternar = !alternar;
-  }
-  return suma % 10 === 0;
-}
-function vencimientoValido(texto) {
-  const partes = texto.split("/");
-  if (partes.length !== 2) return false;
-  const mes = parseInt(partes[0], 10),
-    anio = 2000 + parseInt(partes[1], 10);
-  if (!(mes >= 1 && mes <= 12) || Number.isNaN(anio)) return false;
-  return new Date(anio, mes, 0, 23, 59, 59) >= new Date();
-}
 function generarCodigo() {
   const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let codigo = "GT-";
@@ -114,7 +91,7 @@ function Compra() {
     setNivel(obtenerNivel(u?.compras || 0));
     const f = JSON.parse(localStorage.getItem("funcionSeleccionada") || "null");
     if (!f || !PRECIOS[f.formato]) {
-      navigate("/pelicula");
+      navigate("/");
       return;
     }
     setFuncion(f);
@@ -218,7 +195,7 @@ function Compra() {
         // Esperamos hasta 30 segundos a que llegue la confirmación del webhook.
         for (let intento = 0; intento < 15; intento++) {
           const respuesta = await fetch(
-            `http://localhost:3000/api/entradas/estado/${pendiente.compraId}`,
+            `/api/entradas/estado/${pendiente.compraId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -342,18 +319,17 @@ function Compra() {
       return false;
     }
     if (metodo !== "mp") {
-      if (!numeroTarjetaValido(tarjetaNumero.replace(/\s/g, ""))) {
-        setErrorPago("El número de tarjeta no es válido.");
+      const numeroLimpio = tarjetaNumero.replace(/\s/g, "");
+      if (!/^\d{13,19}$/.test(numeroLimpio)) {
+        setErrorPago("Ingresá un número de tarjeta de prueba de entre 13 y 19 dígitos.");
         return false;
       }
       if (tarjetaTitular.trim().length < 3) {
         setErrorPago("Ingresá el nombre del titular.");
         return false;
       }
-      if (!vencimientoValido(tarjetaVence)) {
-        setErrorPago(
-          "La tarjeta está vencida o la fecha es incorrecta (MM/AA).",
-        );
+      if (!/^\d{2}\/\d{2}$/.test(tarjetaVence) || Number(tarjetaVence.slice(0, 2)) < 1 || Number(tarjetaVence.slice(0, 2)) > 12) {
+        setErrorPago("Ingresá un vencimiento válido con formato MM/AA.");
         return false;
       }
       if (tarjetaCvv.length < 3) {
@@ -379,7 +355,7 @@ function Compra() {
 
       const token = await auth.currentUser.getIdToken();
 
-      const respuesta = await fetch("http://localhost:3000/api/entradas/demo", {
+      const respuesta = await fetch("/api/entradas/demo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -413,7 +389,7 @@ function Compra() {
       const token = await auth.currentUser.getIdToken();
 
       const respuesta = await fetch(
-        "http://localhost:3000/api/entradas/mercadopago",
+        "/api/entradas/mercadopago",
         {
           method: "POST",
           headers: {
@@ -546,7 +522,7 @@ function Compra() {
       localStorage.removeItem("compraEnCurso");
       localStorage.removeItem("reservaVence");
       localStorage.removeItem("funcionSeleccionada");
-      navigate("/pelicula");
+      navigate("/");
     }
   }
   if (!funcion && !compraFinal) return null;
@@ -579,7 +555,7 @@ function Compra() {
       <div className="checkout-header">
         <button
           className={`icono-btn ${paso === 4 ? "invisible" : ""}`}
-          onClick={() => (paso > 1 ? irAPaso(paso - 1) : navigate("/pelicula"))}
+          onClick={() => (paso > 1 ? irAPaso(paso - 1) : navigate("/"))}
         >
           &larr;
         </button>
@@ -596,7 +572,7 @@ function Compra() {
         </div>
         <button
           className="icono-btn"
-          onClick={paso === 4 ? () => navigate("/pelicula") : cancelar}
+          onClick={paso === 4 ? () => navigate("/") : cancelar}
         >
           &times;
         </button>
@@ -753,7 +729,7 @@ function Compra() {
               {metodo && metodo !== "mp" && (
                 <div className="panel-pago">
                   <div className="campo">
-                    <label>Número de tarjeta</label>
+                    <label>Número de tarjeta (de prueba)</label>
                     <input
                       value={tarjetaNumero}
                       onChange={(e) =>
@@ -804,7 +780,7 @@ function Compra() {
                     </div>
                   </div>
                   <p className="nota-demo">
-                    Pago simulado: no se cobra nada y los datos de la tarjeta no
+                    Formulario de demostración: no se cobra nada y los datos de la tarjeta no
                     se guardan. Para probar podés usar 4242 4242 4242 4242,
                     cualquier fecha futura y cualquier CVV.
                   </p>
@@ -869,7 +845,7 @@ function Compra() {
                 <button className="btn-secundario" onClick={descargarQR}>
                   Descargar QR
                 </button>
-                <Link to="/pelicula" className="btn-principal">
+                <Link to="/" className="btn-principal">
                   Volver al inicio
                 </Link>
               </div>
@@ -962,7 +938,7 @@ function Compra() {
               onClick={() => {
                 localStorage.removeItem("compraEnCurso");
                 localStorage.removeItem("reservaVence");
-                navigate("/pelicula");
+                navigate("/");
               }}
             >
               Volver a la película
